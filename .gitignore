@@ -44,4 +44,5 @@ test*.*
 .env-dev
 .env-main
 .env.main-track
-volumes-devsrc/routeTree.gen.ts
+volumes-dev
+src/routeTree.gen.ts
