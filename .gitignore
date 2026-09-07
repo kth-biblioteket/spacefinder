@@ -41,3 +41,7 @@ Dockerfile-dev
 docker-compose-dev.yml
 package-dev.json
 test*.*
+.env-dev
+.env-main
+.env.main-track
+volumes-dev
