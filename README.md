@@ -2,6 +2,22 @@
 
 Detta är ett verktyg för att söka platser på biblioteket.
 
+## Om appen
+
+Space Finder är ett verktyg för att söka och boka studieplatser på biblioteket, med två delar:
+
+- **Studieplatsväljare** (publik) — studenter filtrerar fram platser via en sidopanel:
+  - Fritextsökning
+  - "Jag vill arbeta": enskilt/avskilt, där andra studerar, med vänner, med grupparbete
+  - Ljudnivå: tyst, samtalston, ljudligt
+  - Utrustning: höj-/sänkbara bord, datorer, skärm, whiteboard, studiebås, höj-/sänkbara stolar
+  - Faciliteter: mat tillåten, dagsljus, skrivare, toalett
+  - Platser visas som en lista av kort (titel, kategori, ikoner för aktiv utrustning/faciliteter/ljudnivå, bild) som expanderar till en fullständig beskrivning vid klick.
+
+- **Adminvy** (skyddad, `/admin`) — bibliotekspersonal hanterar platser: lista, lägg till, redigera, ta bort. Formuläret täcker namn, kategori, beskrivning, samma filtergrupper som ovan, samt bilduppladdning.
+
+Design följer KTH:s profil (typsnitt Figtree, KTH-navy/-blå, inga orange-toner) och `lucide-react`-ikoner. Allt UI-text är på svenska.
+
 ## Install på server
 
 - Skapa lokal folder (`sudo mkdir spacefinder`)
@@ -48,6 +64,8 @@ Push till `ref`/`main` kör numera lint + typecheck + unit-tester (se `.github/w
 ### Hämta nya ändringar från Lovable
 
 Lovable pushar direkt till `feature/lovable` i det här repot (ingen separat remote).
+
+`feature/lovable` har sin egen `README.md` (Lovables ursprungliga scaffold-prompt) som ger en konflikt vid varje merge. Behåll alltid vår `README.md` — ta med `README.md`-innehåll från Lovable-sidan bara om det beskriver något om appen som saknas i vår "Om appen"-sektion.
 
 - `git fetch origin`
 - `git checkout ref`
