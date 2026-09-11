@@ -1,5 +1,7 @@
 # KTH Bibliotekets studieplatsväljare
 
+<!-- Synktest från Thomas/Claude, kan tas bort -->
+
 Project: KTH Library Space Finder & Admin Dashboard
 
 Objective: Build a full-stack React web application. It needs two parts: 
