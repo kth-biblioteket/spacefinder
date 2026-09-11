@@ -1,144 +1,81 @@
-# Find spaces
+# Space Finder
 
 Detta är ett verktyg för att söka platser på biblioteket.
 
-## Install
+## Install på server
 
-- Skapa lokal folder (sudo mkdir findspaces)
-- Skapa docker-composer.yml och uppdatera från repot
-- Skapa .env med allt som behövs
-- Skapa och kör prepare.sh (sudo chmod +x prepare.sh)
-- Kopiera innehållet i kong.yml från repo till ./volumes/api/kong.yml
-- Skapa eventuellt record i dns för domän(spacefinder.lib.kth.se)
-  - Via https://sysadm.lan.kth.se
+- Skapa lokal folder (`sudo mkdir spacefinder`)
+- Skapa `docker-compose.yml` och uppdatera från repot
+- Skapa `.env` med allt som behövs
+- Skapa och kör `prepare.sh` (`sudo chmod +x prepare.sh`)
+- Kopiera innehållet i repots `kong.yml` till `./volumes/api/kong.yml`
+- Kopiera `schema.sql` från repot till servern (samma mapp som `docker-compose.yml`)
+- Skapa eventuellt en post i DNS för domänen 
+  - För KTH (`spacefinder.lib.kth.se`)
+    - Via https://sysadm.lan.kth.se
 
 ## Skapa databas/tabeller
-### Logga in på pgadmin
-- registrera server
- - supabase-db/5432
- - user: postgres
- - password: xxxx(env POSTGRES_PASSWORD)
-- Kör schema.sql
-### Importera eventuellt data från Lovable
- - Sctript skapade av lovable(prompta att ta ut tabellerna som rader med INSERT)
- - Bilder via SQL + t ex node-script
-  - Bildlista spaces
-   ```
-      select image_url as val from public.spaces where image_url is not null
-      union
-      select unnest(images) as val from public.spaces where images is not null
-   ```
-  - Bildlista filter-icons
-  ```
-    select icon_url as val from public.filter_options where icon_url is not null
-  ```
-  - kör node-script med dessa respektive listor som hämtar bilder från lovable-buckets och sedan anropar API och laddar upp bilderna i den lokala isntallationen
 
-  - Uppdatera DB:
-
-```mysql
-
-UPDATE public.spaces
-    SET image_url = replace(
-      image_url,
-      'https://lobuiecijreciwgkkcml.supabase.co/storage/v1',
-      'https://spacefinder-ref.lib.kth.se/api/storage/v1'
-    )
-    WHERE image_url LIKE 'https://lobuiecijreciwgkkcml.supabase.co%';
-
-    UPDATE public.spaces
-    SET images = (
-      SELECT array_agg(
-        replace(elem, 'https://lobuiecijreciwgkkcml.supabase.co/storage/v1', 'https://spacefinder-ref.lib.kth.se/api/storage/v1')
-      )
-      FROM unnest(images) AS elem
-    )
-    WHERE images IS NOT NULL AND array_length(images, 1) > 0;
-
-  update public.filter_options
-    set icon_url = replace(
-      icon_url,
-      'https://lobuiecijreciwgkkcml.supabase.co/storage/v1',
-      'https://spacefinder-ref.lib.kth.se/api/storage/v1'
-    )
-    where icon_url like 'https://lobuiecijreciwgkkcml.supabase.co%';
-
-    update public.filter_options
-    set default_icon = replace(
-      default_icon,
-      'https://lobuiecijreciwgkkcml.supabase.co/storage/v1',
-      'https://spacefinder-ref.lib.kth.se/api/storage/v1'
-    )
-    where default_icon like 'https://lobuiecijreciwgkkcml.supabase.co%';
-
-  update public.app_settings
-    set value = replace(
-      value,
-      'https://lobuiecijreciwgkkcml.supabase.co/storage/v1',
-      'https://spacefinder-ref.lib.kth.se/api/storage/v1'
-    )
-    where key = 'capacity_icon_url';
+```bash
+docker compose up -d
+docker exec -i supabase-db psql -U postgres -d postgres < schema.sql
 ```
 
+### Server-komponenter
 
-Github actions yml-fix
-- Måste ha build args
-```
-name: Build and push Docker image 
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          push: true 
-          tags: ${{ steps.meta.outputs.tags }} 
-          labels: ${{ steps.meta.outputs.labels }}
-          build-args: |
-            VITE_SUPABASE_URL=https://spacefinder-ref.lib.kth.se/api
-            VITE_SUPABASE_PUBLISHABLE_KEY=sb_publishable_60Bb-qHXzLofE7g3QT2EN0_A1pWxHEy
-            VITE_SUPABASE_PROJECT_ID=lobuiecijreciwgkkcml
-```         
-- server-adapter.js används för att köra själva appen och dess server-komponeneter i en node-container
+`server-adapter.js` används för att köra appens server-komponenter i en node-container. Den fångar upp inloggning, validerar mot KTH LDAP, och skapar/uppdaterar Supabase-användaren automatiskt via admin-API:t — ingen manuell användarskapning behövs.
 
-### Skapa användare
+Build args för Vite/Supabase-URL:er sätts i `.github/workflows/deploy_ref.yml`/`deploy_main.yml` (behövs eftersom Vite bakar in dem i bygget).
 
-curl -X POST 'https://spacefinder-ref.lib.kth.se/api/auth/v1/signup' \
-  -H "apikey: xxxx" \
-  -H "Authorization: Bearer xxxx" \
-  -H "Content-Type: application/json" \
-  -d '{
-    "email": "tholind@kth.se",
-    "password": "xxxxxx",
-    "email_confirm": false
-  }'
+## För KTH
+### Appen utvecklas på två parallella sätt mot samma repo:
+- **Lovable** — UI/funktionsutveckling i Lovable-editorn, synkas automatiskt till branchen `feature/lovable`.
+- **Lokalt/Docker** — självhostad Supabase-stack i Docker (se nedan).
 
+Se [Branch-roller](#branch-roller) för hur de två flödena möts.
 
+### Branch-roller för KTH
 
-### Uppdatera nya versioner från lovable-repo
-- git remote add upstream https://github.com/sofieseo/kth-rummet-hitta.git
-- git fetch upstream
-- git checkout ref
-- git diff --stat ref upstream/main
-- git merge upstream/main --allow-unrelated-histories
+- **`main`** — produktion (spacefinder.lib.kth.se). Tar bara emot merges från `ref`, aldrig direkta pushar eller direkta merges från `feature/lovable`/en feature-branch.
+- **`ref`** — staging (spacefinder-ref.lib.kth.se). Gemensam landningsplats för både Lovable-synken och egna feature-branches (som PR:as hit).
+- **`feature/lovable`** — Lovable pushar hit automatiskt vid varje ändring i Lovable-editorn.
+- **`feature/*`** (egna) — eget arbete (grenas från `main`). Mergas till `main` **via `ref`** — testas på spacefinder-ref innan det går vidare, aldrig direkt till `main`.
+
+En regel att komma ihåg: **inget når `main` utan att först ha legat på `ref` och synats på spacefinder-ref.**
+
+Push till `ref`/`main` kör numera lint + typecheck + unit-tester (se `.github/workflows/deploy_ref.yml`/`deploy_main.yml`) innan Docker-imagen byggs och deployas — ett fail i något av de stegen blockerar deployen.
+
+### Hämta nya ändringar från Lovable
+
+Lovable pushar direkt till `feature/lovable` i det här repot (ingen separat remote).
+
+- `git fetch origin`
+- `git checkout ref`
+- `git diff --stat ref origin/feature/lovable`
+- `git merge origin/feature/lovable`
 - Hantera eventuella konflikter
-  - git add och commit
-- Hantera eventuell ändring i package.json -- package-lock
-  - nvm use 22
-  - npm install
-  - npm install --legacy-peer-deps
-  - git add och commit
-- Hantera anpassningar för eventuella förändringar.
- - t ex ny folder vid bygge
+  - `git add` och `commit`
+- Hantera eventuell ändring i `package.json`/lockfile
+  - `nvm use 22`
+  - `npm install` (ev. `npm install --legacy-peer-deps`)
+  - `git add` och `commit`
+- Hantera anpassningar för eventuella förändringar
+  - t.ex. ny folder vid bygge
 - Hantera eventuella databasuppdateringar
- - Ligger i filer som uppdaterats i folder "supabase/migrations"
-   - Tabeller, fält etc
-   - Kör SQL i pgadmin
-   - Uppdatera schema.sql
-- git push origin ref
+  - Ligger i filer i `supabase/migrations/`
+  - Kör `./scripts/sync-migrations.sh` på ref-servern (via SSH) — applicerar nya migrationsfiler och regenererar `schema.sql` från den körande databasen automatiskt. Ersätter det gamla sättet (köra SQL manuellt och sedan handredigera `schema.sql`), som orsakat schema-drift tidigare.
+- `git push origin ref`
 - Kontrollera i ref att allt ser ok ut
-- git checkout main
-- git merge ref 
-- git push origin main
+- `git checkout main`
+- `git merge ref`
+- `git push origin main`
+- Kör `./scripts/sync-migrations.sh` på main-servern också (idempotent tack vare `.migrations-applied` — kostar inget att köra om)
 
-### Licens / License
+### Egna funktioner
+
+Grenas från `main` som `feature/<namn>`. När klart: PR/merge in i `ref`, testa på spacefinder-ref, promota sedan till `main` på exakt samma sätt som Lovable-synken ovan (`git checkout main && git merge ref && git push origin main`) — aldrig direkt till `main`.
+
+## Licens / License
 
 Copyright (C) 2026 KTH Biblioteket
 
