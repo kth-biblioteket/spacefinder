@@ -1,1 +1,0 @@
-ALTER TABLE public.spaces ADD COLUMN IF NOT EXISTS map_url_en text, ADD COLUMN IF NOT EXISTS booking_url_en text;

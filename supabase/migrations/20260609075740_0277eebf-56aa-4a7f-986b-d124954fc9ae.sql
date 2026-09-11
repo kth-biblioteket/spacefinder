@@ -1,1 +1,0 @@
-ALTER TABLE public.spaces ADD COLUMN IF NOT EXISTS booking_room_number int;

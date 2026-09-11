@@ -1,1 +1,0 @@
-ALTER TABLE public.spaces ADD COLUMN IF NOT EXISTS info_sv text, ADD COLUMN IF NOT EXISTS info_en text;
