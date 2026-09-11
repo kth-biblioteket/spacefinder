@@ -1,1 +1,0 @@
-INSERT INTO public.app_settings (key, value) VALUES ('card_section_order', '["header","chips","buttons"]') ON CONFLICT (key) DO NOTHING;

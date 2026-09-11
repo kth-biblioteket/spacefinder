@@ -1,1 +1,0 @@
-ALTER TABLE public.spaces ADD COLUMN IF NOT EXISTS countmatters_sensor_id text;

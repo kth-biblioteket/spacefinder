@@ -1,1 +1,0 @@
-ALTER TABLE public.spaces ADD COLUMN IF NOT EXISTS show_occupancy boolean NOT NULL DEFAULT true;

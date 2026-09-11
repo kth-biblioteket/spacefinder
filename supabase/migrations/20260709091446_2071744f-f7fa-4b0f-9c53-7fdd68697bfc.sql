@@ -1,1 +1,0 @@
-ALTER TABLE public.spaces ADD COLUMN IF NOT EXISTS description_inline boolean NOT NULL DEFAULT false;

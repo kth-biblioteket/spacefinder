@@ -1,1 +1,0 @@
-ALTER TABLE public.filter_options DROP CONSTRAINT IF EXISTS filter_options_category_check;

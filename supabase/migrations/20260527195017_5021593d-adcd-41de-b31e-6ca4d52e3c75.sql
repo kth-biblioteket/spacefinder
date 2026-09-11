@@ -1,1 +1,0 @@
-ALTER TABLE public.spaces ADD COLUMN IF NOT EXISTS show_capacity_publicly boolean NOT NULL DEFAULT false;
