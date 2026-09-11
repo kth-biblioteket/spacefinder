@@ -112,3 +112,5 @@ cd <repository-name>
 npm i
 npm run dev
 ```
+
+Test av synk mot repo/branch
