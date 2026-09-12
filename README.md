@@ -1,116 +1,111 @@
-# KTH Bibliotekets studieplatsväljare
+# Space Finder
 
-Project: KTH Library Space Finder & Admin Dashboard
+Detta är ett verktyg för att söka platser på biblioteket.
 
-Objective: Build a full-stack React web application. It needs two parts: 
+## Om appen
 
-1. A public-facing "Space Finder" for students to filter study spaces.
+Space Finder är ett verktyg för att söka och boka studieplatser på biblioteket, med två delar:
 
-2. A protected "Admin Dashboard" (CMS) for library staff to manage the spaces.
+- **Studieplatsväljare** (publik) — studenter filtrerar fram platser via en sidopanel:
+  - Fritextsökning
+  - "Jag vill arbeta": enskilt/avskilt, där andra studerar, med vänner, med grupparbete
+  - Ljudnivå: tyst, samtalston, ljudligt
+  - Utrustning: höj-/sänkbara bord, datorer, skärm, whiteboard, studiebås, höj-/sänkbara stolar
+  - Faciliteter: mat tillåten, dagsljus, skrivare, toalett
+  - Platser visas som en lista av kort (titel, kategori, ikoner för aktiv utrustning/faciliteter/ljudnivå, bild) som expanderar till en fullständig beskrivning vid klick.
 
-Tech Stack & Backend:
+- **Adminvy** (skyddad, `/admin`) — bibliotekspersonal hanterar platser: lista, lägg till, redigera, ta bort. Formuläret täcker namn, kategori, beskrivning, samma filtergrupper som ovan, samt bilduppladdning.
 
-- Use Supabase for the database and image storage. 
+Design följer KTH:s profil (typsnitt Figtree, KTH-navy/-blå, inga orange-toner) och `lucide-react`-ikoner. Allt UI-text är på svenska.
 
-- Create a "Spaces" table in Supabase.
+## Install på server
 
-Design System & Branding (Strict KTH Profile):
+- Skapa lokal folder (`sudo mkdir spacefinder`)
+- Skapa `docker-compose.yml` och uppdatera från repot
+- Skapa `.env` med allt som behövs
+- Skapa och kör `prepare.sh` (`sudo chmod +x prepare.sh`)
+- Kopiera innehållet i repots `kong.yml` till `./volumes/api/kong.yml`
+- Kopiera `schema.sql` från repot till servern (samma mapp som `docker-compose.yml`)
+- Skapa eventuellt en post i DNS för domänen 
+  - För KTH (`spacefinder.lib.kth.se`)
+    - Via https://sysadm.lan.kth.se
 
-- Typography: 'Figtree' (import from Google Fonts).
+## Skapa databas/tabeller
 
-- Colors: KTH Navy (#000061) for primary text/headers. KTH Blue (#1954a6) for active states/buttons. Backgrounds: Light Gray/Sand (#F5F5F5), Cards/Sidebar White (#FFFFFF). NO ORANGE.
-
-- Iconography: Use 'lucide-react' icons. They must be clean and minimalist. 
-
-PART 1: PUBLIC SPACE FINDER (Student View)
-
-- Layout: Left sidebar for filters, right main area for a vertical list of Space Cards. (Mobile: filters in a bottom sheet).
-
-- Sidebar Filters (Left Column):
-
-  1. Sökfält: Text input with a Search icon. Placeholder: "Sök på lokal...".
-
-  2. Filter Group "Jag vill arbeta" (Style as large clickable list items):
-
-     - Options: "Enskilt, i avskildhet", "Där andra studerar", "Med vänner", "Med ett grupparbete".
-
-  3. Filter Group "Ljudnivå" (Style as pill-shaped toggle buttons with icons):
-
-     - Options: [VolumeX] "Tyst", [Volume1] "Samtalston", [Volume2] "Ljudligt".
-
-  4. Filter Group "Utrustning" (Style as pill-shaped toggle buttons with icons):
-
-     - Options: [Sliders] "Höj- och sänkbara bord", [Desktop] "Datorer", [Tv] "Skärm", [Edit] "Whiteboard", [Columns] "Studiebås", [Armchair] "Höj- och sänkbara stolar".
-
-  5. Filter Group "Faciliteter" (Style as pill-shaped toggle buttons with icons):
-
-     - Options: [Utensils] "Mat tillåten", [Sun] "Dagsljus", [Printer] "Skrivare", [Accessibility] "Toalett".
-
-Pill Button Styling (TU Delft Style):
-
-- Unselected state: Light gray background, dark text/icon.
-
-- Selected state: KTH Blue (#1954a6) background, white text/icon.
-
-Main Area (Space Cards List):
-
-- Display spaces as a vertical list of horizontal cards.
-
-- Card Closed State (Left to right): Title, Category tag. Below the title, display a neat, horizontal row of the SAME Lucide icons used in the filters representing the active equipment, facilities, and noise level. On the far right: An image thumbnail (approx 25% width).
-
-- Image Logic: If the space has an image URL from the database, display it. If NOT, display a stylish placeholder: a KTH Navy (#000061) background with a white "Book" or "Library" Lucide icon centered in it.
-
-- Interaction (Accordion): Clicking anywhere on a card smoothly expands it downwards to reveal the full description text.
-
-- Filtering: Instant dynamic filtering based on sidebar selections.
-
-PART 2: ADMIN DASHBOARD (Staff View)
-
-- Create a separate route (e.g., /admin) for this view.
-
-- Layout: A clean table or list showing all existing spaces with "Add New Space", "Edit", and "Delete" features.
-
-- Space Form (Add/Edit Modal or Page):
-
-  - Text inputs: Name, Category, Description.
-
-  - Multi-select/Checkboxes for: Intent ("Jag vill arbeta"), Noise Level, Equipment ("Utrustning"), and Facilities ("Faciliteter").
-
-  - Image Upload: A file upload component saving to Supabase Storage.
-
-Initial Data Seed:
-
-Seed the database with these exact examples so the public view works immediately:
-
-1. Name: "Norra galleriet", Category: "Tyst zon", Intent: ["Enskilt, i avskildhet"], Noise: "Tyst", Equipment: ["Höj- och sänkbara bord", "Studiebås"], Facilities: ["Dagsljus"], Description: "Helt tyst läsesal på plan 3 med avskärmade studieplatser för maximalt fokus."
-
-2. Name: "Bibliotekshallen", Category: "Öppen studieyta", Intent: ["Där andra studerar", "Med vänner"], Noise: "Ljudligt", Equipment: ["Höj- och sänkbara stolar"], Facilities: ["Mat tillåten", "Dagsljus", "Toalett"], Description: "Den stora öppna hallen på entréplan. Livlig miljö som passar för lättare studier och möten."
-
-3. Name: "Datorsal Maxwell", Category: "Datorsal / Övningssal", Intent: ["Enskilt, i avskildhet"], Noise: "Samtalston", Equipment: ["Datorer"], Facilities: ["Skrivare"], Description: "Datorsal utrustad med stationära datorer för enskilt arbete."
-
-Language: 
-
-All UI text in both the public view and the admin dashboard MUST be in Swedish.
-
-This project was built with [Lovable](https://lovable.dev).
-
-## Build with Lovable
-
-Continue developing this project in the [Lovable editor](https://lovable.dev/projects/a2ff8471-0d85-4601-9583-abc6695c0807).
-
-- **Ship faster**: describe what you want to build and Lovable handles the code.
-- **Stay in sync**: every change made in Lovable is committed straight to this repository.
-- **Full ownership**: this code is yours. Push to `main` on GitHub and your changes sync back into Lovable, ready for your next prompt.
-
-## Development
-
-Prefer working locally? You need Node.js and npm — [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating).
-
-```sh
-git clone <this-repository-url>
-cd <repository-name>
-npm i
-npm run dev
+```bash
+docker compose up -d
+docker exec -i supabase-db psql -U postgres -d postgres < schema.sql
 ```
 
-Test av synk mot repo/branch
+### Server-komponenter
+
+`server-adapter.js` används för att köra appens server-komponenter i en node-container. Den fångar upp inloggning, validerar mot KTH LDAP, och skapar/uppdaterar Supabase-användaren automatiskt via admin-API:t — ingen manuell användarskapning behövs.
+
+Build args för Vite/Supabase-URL:er sätts i `.github/workflows/deploy_ref.yml`/`deploy_main.yml` (behövs eftersom Vite bakar in dem i bygget).
+
+## För KTH
+### Appen utvecklas på två parallella sätt mot samma repo:
+- **Lovable** — UI/funktionsutveckling i Lovable-editorn, synkas automatiskt till branchen `feature/lovable`.
+- **Lokalt/Docker** — självhostad Supabase-stack i Docker (se nedan).
+
+Se [Branch-roller](#branch-roller) för hur de två flödena möts.
+
+### Branch-roller för KTH
+
+- **`main`** — produktion (spacefinder.lib.kth.se). Tar bara emot merges från `ref`, aldrig direkta pushar eller direkta merges från `feature/lovable`/en feature-branch.
+- **`ref`** — staging (spacefinder-ref.lib.kth.se). Gemensam landningsplats för både Lovable-synken och egna feature-branches (som PR:as hit).
+- **`feature/lovable`** — Lovable pushar hit automatiskt vid varje ändring i Lovable-editorn.
+- **`feature/*`** (egna) — eget arbete (grenas från `main`). Mergas till `main` **via `ref`** — testas på spacefinder-ref innan det går vidare, aldrig direkt till `main`.
+
+En regel att komma ihåg: **inget når `main` utan att först ha legat på `ref` och synats på spacefinder-ref.**
+
+Push till `ref`/`main` kör numera lint + typecheck + unit-tester (se `.github/workflows/deploy_ref.yml`/`deploy_main.yml`) innan Docker-imagen byggs och deployas — ett fail i något av de stegen blockerar deployen.
+
+### Hämta nya ändringar från Lovable
+
+Lovable pushar direkt till `feature/lovable` i det här repot (ingen separat remote).
+
+`feature/lovable` har sin egen `README.md` (Lovables ursprungliga scaffold-prompt) som ger en konflikt vid varje merge. Behåll alltid vår `README.md` — ta med `README.md`-innehåll från Lovable-sidan bara om det beskriver något om appen som saknas i vår "Om appen"-sektion.
+
+- `git fetch origin`
+- `git checkout ref`
+- `git diff --stat ref origin/feature/lovable`
+- `git merge origin/feature/lovable`
+- Hantera eventuella konflikter
+  - `git add` och `commit`
+- Hantera eventuell ändring i `package.json`/lockfile
+  - `nvm use 22`
+  - `npm install` (ev. `npm install --legacy-peer-deps`)
+  - `git add` och `commit`
+- Hantera anpassningar för eventuella förändringar
+  - t.ex. ny folder vid bygge
+- Hantera eventuella databasuppdateringar
+  - Ligger i filer i `supabase/migrations/`
+  - Kör `./scripts/sync-migrations.sh` på ref-servern (via SSH) — applicerar nya migrationsfiler och regenererar `schema.sql` från den körande databasen automatiskt. Ersätter det gamla sättet (köra SQL manuellt och sedan handredigera `schema.sql`), som orsakat schema-drift tidigare.
+- `git push origin ref`
+- Kontrollera i ref att allt ser ok ut
+- `git checkout main`
+- `git merge ref`
+- `git push origin main`
+- Kör `./scripts/sync-migrations.sh` på main-servern också (idempotent tack vare `.migrations-applied` — kostar inget att köra om)
+
+### Egna funktioner
+
+Grenas från `main` som `feature/<namn>`. När klart: PR/merge in i `ref`, testa på spacefinder-ref, promota sedan till `main` på exakt samma sätt som Lovable-synken ovan (`git checkout main && git merge ref && git push origin main`) — aldrig direkt till `main`.
+
+## Licens / License
+
+Copyright (C) 2026 KTH Biblioteket
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or (at
+your option) any later version.
+
+This program is distributed in the hope that it will be useful, but
+WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program. If not, see <https://www.gnu.org/licenses/>.
