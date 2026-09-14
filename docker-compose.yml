@@ -247,6 +247,8 @@ services:
 
 volumes:
   persistent-findspaces-db:
+    name: findspaces_persistent-findspaces-db
+    external: true
 
 networks:
   apps-net:
