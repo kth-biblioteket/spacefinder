@@ -3,8 +3,8 @@ version: "3.8"
 services:
 # ─── Applikation ──────────────────────────────────────
   app:
-    container_name: findspaces
-    image: ghcr.io/kth-biblioteket/findspaces:${REPO_TYPE}
+    container_name: spacefinder
+    image: ghcr.io/kth-biblioteket/spacefinder:${REPO_TYPE}
     restart: unless-stopped
     networks:
       - apps-net
@@ -13,11 +13,11 @@ services:
         condition: service_healthy
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.findspaces.rule=Host(`${DOMAIN_NAME}`)"
-      - "traefik.http.routers.findspaces.entrypoints=websecure"
-      - "traefik.http.routers.findspaces.tls=true"
-      - "traefik.http.routers.findspaces.tls.certresolver=myresolver"
-      - "traefik.http.services.findspaces.loadbalancer.server.port=80"
+      - "traefik.http.routers.spacefinder.rule=Host(`${DOMAIN_NAME}`)"
+      - "traefik.http.routers.spacefinder.entrypoints=websecure"
+      - "traefik.http.routers.spacefinder.tls=true"
+      - "traefik.http.routers.spacefinder.tls.certresolver=myresolver"
+      - "traefik.http.services.spacefinder.loadbalancer.server.port=80"
     env_file:
       - .env
 
@@ -47,8 +47,8 @@ services:
       - "traefik.http.routers.supabase-api.tls.certresolver=myresolver"
       - "traefik.http.services.supabase-api.loadbalancer.server.port=8000"
     volumes:
-      - /local/docker/findspaces/volumes/api/kong.yml:/home/kong/temp.yml:ro,z
-      - /local/docker/findspaces/volumes/api/kong-entrypoint.sh:/home/kong/kong-entrypoint.sh:ro,z
+      - /local/docker/spacefinder/volumes/api/kong.yml:/home/kong/temp.yml:ro,z
+      - /local/docker/spacefinder/volumes/api/kong-entrypoint.sh:/home/kong/kong-entrypoint.sh:ro,z
     environment:
       KONG_DATABASE: "off"
       KONG_DECLARATIVE_CONFIG: /usr/local/kong/kong.yml
@@ -153,13 +153,13 @@ services:
       retries: 15
       start_period: 10s
     volumes:
-      - /local/docker/findspaces/volumes/db/init/99-realtime.sql:/docker-entrypoint-initdb.d/migrations/99-realtime.sql:Z
-      - /local/docker/findspaces/volumes/db/init/98-webhooks.sql:/docker-entrypoint-initdb.d/init-scripts/98-webhooks.sql:Z
-      - /local/docker/findspaces/volumes/db/init/99-roles.sql:/docker-entrypoint-initdb.d/init-scripts/99-roles.sql:Z
-      - /local/docker/findspaces/volumes/db/init/99-jwt.sql:/docker-entrypoint-initdb.d/init-scripts/99-jwt.sql:Z
-      - /local/docker/findspaces/volumes/db/init/97-_supabase.sql:/docker-entrypoint-initdb.d/migrations/97-_supabase.sql:Z
-      - /local/docker/findspaces/volumes/db/init/99-logs.sql:/docker-entrypoint-initdb.d/migrations/99-logs.sql:Z
-      - /local/docker/findspaces/volumes/db/init/99-pooler.sql:/docker-entrypoint-initdb.d/migrations/99-pooler.sql:Z
+      - /local/docker/spacefinder/volumes/db/init/99-realtime.sql:/docker-entrypoint-initdb.d/migrations/99-realtime.sql:Z
+      - /local/docker/spacefinder/volumes/db/init/98-webhooks.sql:/docker-entrypoint-initdb.d/init-scripts/98-webhooks.sql:Z
+      - /local/docker/spacefinder/volumes/db/init/99-roles.sql:/docker-entrypoint-initdb.d/init-scripts/99-roles.sql:Z
+      - /local/docker/spacefinder/volumes/db/init/99-jwt.sql:/docker-entrypoint-initdb.d/init-scripts/99-jwt.sql:Z
+      - /local/docker/spacefinder/volumes/db/init/97-_supabase.sql:/docker-entrypoint-initdb.d/migrations/97-_supabase.sql:Z
+      - /local/docker/spacefinder/volumes/db/init/99-logs.sql:/docker-entrypoint-initdb.d/migrations/99-logs.sql:Z
+      - /local/docker/spacefinder/volumes/db/init/99-pooler.sql:/docker-entrypoint-initdb.d/migrations/99-pooler.sql:Z
       - persistent-findspaces-db:/var/lib/postgresql/data:Z
     environment:
       POSTGRES_HOST: /var/run/postgresql
@@ -208,7 +208,7 @@ services:
       S3_PROTOCOL_ACCESS_KEY_ID: ${S3_PROTOCOL_ACCESS_KEY_ID}
       S3_PROTOCOL_ACCESS_KEY_SECRET: ${S3_PROTOCOL_ACCESS_KEY_SECRET}
     volumes:
-      - /local/docker/findspaces/volumes/storage:/var/lib/storage:z
+      - /local/docker/spacefinder/volumes/storage:/var/lib/storage:z
 
   imgproxy:
     container_name: supabase-imgproxy
@@ -222,7 +222,7 @@ services:
       IMGPROXY_USE_ETAG: "true"
       IMGPROXY_ENABLE_WEBP_DETECTION: "true"
     volumes:
-      - /local/docker/findspaces/volumes/storage:/var/lib/storage:z
+      - /local/docker/spacefinder/volumes/storage:/var/lib/storage:z
 
   pgadmin:
     container_name: pgadmin
@@ -243,7 +243,7 @@ services:
       - "traefik.http.routers.pgadmin.tls.certresolver=myresolver"
       - "traefik.http.services.pgadmin.loadbalancer.server.port=80"
     volumes:
-      - /local/docker/findspaces/volumes/pgadmin:/var/lib/pgadmin:z
+      - /local/docker/spacefinder/volumes/pgadmin:/var/lib/pgadmin:z
 
 volumes:
   persistent-findspaces-db:
