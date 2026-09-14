@@ -115,9 +115,6 @@ services:
   # ─── REST API (PostgREST) ────────────────────────────────
   rest:
     container_name: spacefinder-rest
-    build:
-      context: .
-      dockerfile: Dockerfile.rest
     image: postgrest/postgrest:v14.8
     restart: on-failure:3
     networks:
