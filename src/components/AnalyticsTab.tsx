@@ -1281,14 +1281,14 @@ function DatePicker({
   onChange: (d: Date | undefined) => void;
 }) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-none">
       <span className="text-xs text-muted-foreground">{label}</span>
       <Popover>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             size="sm"
-            className={cn("w-[200px] justify-start text-left font-normal", !value && "text-muted-foreground")}
+            className={cn("w-full sm:w-[200px] justify-start text-left font-normal", !value && "text-muted-foreground")}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
             {value ? format(value, "d MMM yyyy", { locale: sv }) : <span>Välj datum</span>}
