@@ -159,6 +159,9 @@ export function AnalyticsTab({
       const t = customTo ? endOfDay(customTo) : endOfDay(new Date());
       return { from: f, to: t };
     }
+    if (preset === "today") {
+      return { from: startOfDay(new Date()), to: new Date() };
+    }
     const p = PRESETS.find((x) => x.key === preset)!;
     return { from: new Date(Date.now() - p.hours * 3600 * 1000), to: new Date() };
   }, [preset, customFrom, customTo]);
