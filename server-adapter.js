@@ -15,6 +15,10 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CLIENT_DIR = path.join(__dirname, '.output', 'public');
 const STATIC_EXTENSIONS = ['.js', '.css', '.png', '.jpg', '.jpeg', '.svg', '.ico', '.woff', '.woff2'];
 
+// Interna URL:er mot GoTrue/PostgREST-containrarna (se container_name i docker-compose.yml)
+const AUTH_INTERNAL_URL = process.env.AUTH_INTERNAL_URL || 'http://spacefinder-auth:9999';
+const REST_INTERNAL_URL = process.env.REST_INTERNAL_URL || 'http://spacefinder-rest:3000';
+
 createServer(async (req, res) => {
   const fullUrl = `http://${req.headers.host}${req.url}`;
   const url = new URL(fullUrl);
@@ -104,7 +108,7 @@ createServer(async (req, res) => {
           const adminKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
           console.log("Checking/Creating/Updating user in Supabase for:", email);
 
-          const listUsersRes = await fetch(`http://supabase-auth:9999/admin/users`, {
+          const listUsersRes = await fetch(`${AUTH_INTERNAL_URL}/admin/users`, {
             method: 'GET',
             headers: {
               'apikey': adminKey,
@@ -123,7 +127,7 @@ createServer(async (req, res) => {
           }
 
           if (userId) {
-            const updateRes = await fetch(`http://supabase-auth:9999/admin/users/${userId}`, {
+            const updateRes = await fetch(`${AUTH_INTERNAL_URL}/admin/users/${userId}`, {
               method: 'PUT',
               headers: {
                 'Content-Type': 'application/json',
@@ -140,7 +144,7 @@ createServer(async (req, res) => {
               return res.end(JSON.stringify({ error: "server_error", error_description: "Kunde inte synka lösenord mot Supabase Admin" }));
             }
           } else {
-            const createRes = await fetch(`http://supabase-auth:9999/admin/users`, {
+            const createRes = await fetch(`${AUTH_INTERNAL_URL}/admin/users`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -166,7 +170,7 @@ createServer(async (req, res) => {
 
           // 2.5. Säkerställ att användaren har admin-roll i public.user_roles
           try {
-            const roleRes = await fetch(`http://supabase-rest:3000/user_roles`, {
+            const roleRes = await fetch(`${REST_INTERNAL_URL}/user_roles`, {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
@@ -191,7 +195,7 @@ createServer(async (req, res) => {
           }
 
           // 3. Hämta GoTrue-session
-          const gotrueRes = await fetch(`http://supabase-auth:9999/token${url.search}`, {
+          const gotrueRes = await fetch(`${AUTH_INTERNAL_URL}/token${url.search}`, {
             method: 'POST',
             headers: {
               'Content-Type': 'application/json',
@@ -208,7 +212,7 @@ createServer(async (req, res) => {
         }
 
         // Om det är någon annan grant_type, skicka vidare till GoTrue direkt
-        const fallbackRes = await fetch(`http://supabase-auth:9999/token${url.search}`, {
+        const fallbackRes = await fetch(`${AUTH_INTERNAL_URL}/token${url.search}`, {
           method: 'POST',
           headers: {
             'Content-Type': req.headers['content-type'] || 'application/x-www-form-urlencoded',

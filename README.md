@@ -34,7 +34,7 @@ Design följer KTH:s profil (typsnitt Figtree, KTH-navy/-blå, inga orange-toner
 
 ```bash
 docker compose up -d
-docker exec -i supabase-db psql -U postgres -d postgres < schema.sql
+docker exec -i spacefinder-db psql -U postgres -d postgres < schema.sql
 ```
 
 ### Server-komponenter

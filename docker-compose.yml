@@ -23,7 +23,7 @@ services:
 
   # ─── API Gateway (Kong) ──────────────────────────────────
   kong:
-    container_name: supabase-api
+    container_name: spacefinder-api
     image: kong/kong:3.9.1
     restart: unless-stopped
     networks:
@@ -41,11 +41,11 @@ services:
     labels:
       - "traefik.enable=true"
       # token för att login via api.lib.kth.se/login ska fungera
-      - "traefik.http.routers.supabase-api.rule=Host(`${DOMAIN_NAME}`) && PathPrefix(`/api`) && !Path(`/api/auth/v1/token`)"
-      - "traefik.http.routers.supabase-api.entrypoints=websecure"
-      - "traefik.http.routers.supabase-api.tls=true"
-      - "traefik.http.routers.supabase-api.tls.certresolver=myresolver"
-      - "traefik.http.services.supabase-api.loadbalancer.server.port=8000"
+      - "traefik.http.routers.spacefinder-api.rule=Host(`${DOMAIN_NAME}`) && PathPrefix(`/api`) && !Path(`/api/auth/v1/token`)"
+      - "traefik.http.routers.spacefinder-api.entrypoints=websecure"
+      - "traefik.http.routers.spacefinder-api.tls=true"
+      - "traefik.http.routers.spacefinder-api.tls.certresolver=myresolver"
+      - "traefik.http.services.spacefinder-api.loadbalancer.server.port=8000"
     volumes:
       - /local/docker/spacefinder/volumes/api/kong.yml:/home/kong/temp.yml:ro,z
       - /local/docker/spacefinder/volumes/api/kong-entrypoint.sh:/home/kong/kong-entrypoint.sh:ro,z
@@ -70,7 +70,7 @@ services:
 
   # ─── Autentisering ───────────────────────────────────────
   auth:
-    container_name: supabase-auth
+    container_name: spacefinder-auth
     image: supabase/gotrue:v2.186.0
     restart: unless-stopped
     networks:
@@ -114,7 +114,7 @@ services:
 
   # ─── REST API (PostgREST) ────────────────────────────────
   rest:
-    container_name: supabase-rest
+    container_name: spacefinder-rest
     build:
       context: .
       dockerfile: Dockerfile.rest
@@ -141,7 +141,7 @@ services:
       PGRST_DB_CHANNEL: "pgrst"
   # ─── Databas ─────────────────────────────────────────────
   db:
-    container_name: supabase-db
+    container_name: spacefinder-db
     image: supabase/postgres:15.8.1.085
     restart: unless-stopped
     networks:
@@ -180,7 +180,7 @@ services:
 
   # ─── Lagring ─────────────────────────────────────────────
   storage:
-    container_name: supabase-storage
+    container_name: spacefinder-storage
     image: supabase/storage-api:v1.48.26
     restart: unless-stopped
     networks:
@@ -211,7 +211,7 @@ services:
       - /local/docker/spacefinder/volumes/storage:/var/lib/storage:z
 
   imgproxy:
-    container_name: supabase-imgproxy
+    container_name: spacefinder-imgproxy
     image: darthsim/imgproxy:v3.8
     restart: unless-stopped
     networks:
@@ -225,7 +225,7 @@ services:
       - /local/docker/spacefinder/volumes/storage:/var/lib/storage:z
 
   pgadmin:
-    container_name: pgadmin
+    container_name: spacefinder-pgadmin
     image: dpage/pgadmin4
     restart: unless-stopped
     networks:
@@ -237,11 +237,11 @@ services:
       SCRIPT_NAME: /db-admin
     labels:
       - "traefik.enable=true"
-      - "traefik.http.routers.pgadmin.rule=Host(`${DOMAIN_NAME}`) && PathPrefix(`/db-admin`)"
-      - "traefik.http.routers.pgadmin.entrypoints=websecure"
-      - "traefik.http.routers.pgadmin.tls=true"
-      - "traefik.http.routers.pgadmin.tls.certresolver=myresolver"
-      - "traefik.http.services.pgadmin.loadbalancer.server.port=80"
+      - "traefik.http.routers.spacefinder-pgadmin.rule=Host(`${DOMAIN_NAME}`) && PathPrefix(`/db-admin`)"
+      - "traefik.http.routers.spacefinder-pgadmin.entrypoints=websecure"
+      - "traefik.http.routers.spacefinder-pgadmin.tls=true"
+      - "traefik.http.routers.spacefinder-pgadmin.tls.certresolver=myresolver"
+      - "traefik.http.services.spacefinder-pgadmin.loadbalancer.server.port=80"
     volumes:
       - /local/docker/spacefinder/volumes/pgadmin:/var/lib/pgadmin:z
 
