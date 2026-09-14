@@ -1190,6 +1190,22 @@ export function AnalyticsTab({
           </div>
 
           <Section
+            title="Trafik per dag"
+            help="Antal sidvisningar för varje enskild dag i vald period. Välj t.ex. 30 dagar ovan för att se utvecklingen dag för dag."
+          >
+            <div className="h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={trafficByDay}>
+                  <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" minTickGap={20} />
+                  <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="var(--primary)" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Section>
+
+          <Section
             title="Delningar"
             help="Klick på delningsikonen på lokalkorten, samt hur många gånger en delad länk faktiskt öppnats av någon."
           >
