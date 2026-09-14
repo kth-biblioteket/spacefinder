@@ -355,6 +355,27 @@ export function AnalyticsTab({
     return ordered;
   }, [rows]);
 
+  const trafficByDay = useMemo(() => {
+    const counts = new Map<string, number>();
+    const days: { key: string; label: string }[] = [];
+    const start = new Date(from);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(to);
+    end.setHours(0, 0, 0, 0);
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      days.push({ key, label: format(d, "d/M") });
+      counts.set(key, 0);
+    }
+    for (const r of rows) {
+      if (r.event_type !== "page_view") continue;
+      const d = new Date(r.created_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      if (counts.has(key)) counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return days.map((d) => ({ label: d.label, value: counts.get(d.key) ?? 0 }));
+  }, [rows, from, to]);
+
   const emptySearches = useMemo(() => {
     const out: { when: string; query?: string; kind?: string; workMode?: string; cats: string }[] = [];
     for (const r of rows) {
