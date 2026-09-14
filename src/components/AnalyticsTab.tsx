@@ -711,25 +711,14 @@ export function AnalyticsTab({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <h2 className="text-xl font-bold">Statistik</h2>
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="inline-flex rounded-full border border-border bg-card overflow-hidden text-sm">
-            {PRESETS.map((p) => (
-              <button
-                key={p.key}
-                type="button"
-                onClick={() => setPreset(p.key)}
-                className={`px-3 py-1.5 ${preset === p.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
+      <div className="space-y-3">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+          <h2 className="truncate text-xl font-bold">Statistik</h2>
           <Button
             type="button"
             variant="outline"
             size="sm"
+            className="shrink-0"
             disabled={rows.length === 0}
             onClick={() =>
               exportAnalyticsToExcel(rows, from, to, {
@@ -739,8 +728,23 @@ export function AnalyticsTab({
               })
             }
           >
-            <Download className="h-4 w-4 mr-2" /> Exportera Excel
+            <Download className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Exportera Excel</span>
+            <span className="sr-only sm:hidden">Exportera Excel</span>
           </Button>
+        </div>
+        <div className="flex flex-wrap gap-2 text-sm">
+          {PRESETS.map((p) => (
+            <button
+              key={p.key}
+              type="button"
+              onClick={() => setPreset(p.key)}
+              aria-pressed={preset === p.key}
+              className={`rounded-full border border-border px-3 py-1.5 ${preset === p.key ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground hover:text-foreground"}`}
+            >
+              {p.label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -756,13 +760,13 @@ export function AnalyticsTab({
         </div>
       )}
 
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-muted-foreground break-words">
         Vald period: {format(from, "d MMM yyyy HH:mm", { locale: sv })} – {format(to, "d MMM yyyy HH:mm", { locale: sv })}
       </p>
       <p className="text-xs text-muted-foreground -mt-4">
-        Statistiken uppdateras automatiskt var 30:e sekund. Håll muspekaren över (eller tryck på)
+        Statistiken uppdateras automatiskt var 30:e sekund. Klicka på
         <Info className="inline h-3.5 w-3.5 mx-1 align-[-2px]" aria-hidden="true" />
-        för en förklaring av respektive fält.
+        för att fälla ut en förklaring av respektive fält.
       </p>
 
       {isLoading ? (
