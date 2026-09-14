@@ -1309,22 +1309,35 @@ function DatePicker({
   );
 }
 
-function HelpTip({ text }: { text: string }) {
-  return (
-    <button
-      type="button"
-      tabIndex={0}
-      title={text}
-      aria-label={text}
-      className="inline-flex shrink-0 text-muted-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-full align-middle"
-      onClick={(e) => e.preventDefault()}
-    >
-      <Info className="h-3.5 w-3.5" aria-hidden="true" />
-    </button>
-  );
+let helpIdCounter = 0;
+
+function useHelpDisclosure(help?: string) {
+  const [open, setOpen] = useState(false);
+  const [id] = useState(() => `stat-help-${++helpIdCounter}`);
+  if (!help) return { toggle: null, panel: null };
+  return {
+    toggle: (
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={id}
+        aria-label={open ? "Dölj förklaring" : "Visa förklaring"}
+        className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-muted-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <Info className="h-3.5 w-3.5" aria-hidden="true" />
+      </button>
+    ),
+    panel: open ? (
+      <p id={id} className="mt-2 rounded-lg bg-muted/60 p-2 text-xs font-normal leading-relaxed text-muted-foreground break-words">
+        {help}
+      </p>
+    ) : null,
+  };
 }
 
 function Stat({ label, value, prev, help }: { label: string; value: number | string; prev?: number; help?: string }) {
+  const { toggle, panel } = useHelpDisclosure(help);
   let delta: { pct: number; dir: "up" | "down" | "flat" } | null = null;
   if (typeof value === "number" && typeof prev === "number") {
     if (prev === 0 && value === 0) delta = { pct: 0, dir: "flat" };
@@ -1338,32 +1351,35 @@ function Stat({ label, value, prev, help }: { label: string; value: number | str
     delta?.dir === "up" ? "text-emerald-600" : delta?.dir === "down" ? "text-red-600" : "text-muted-foreground";
   const arrow = delta?.dir === "up" ? "▲" : delta?.dir === "down" ? "▼" : "→";
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <div className="text-xs text-muted-foreground flex items-center gap-1">
-        <span>{label}</span>
-        {help && <HelpTip text={help} />}
+    <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
+      <div className="text-xs text-muted-foreground flex items-start gap-1">
+        <span className="min-w-0 break-words">{label}</span>
+        {toggle}
       </div>
-      <div className="mt-1 text-2xl font-bold tabular-nums">
+      <div className="mt-1 text-xl sm:text-2xl font-bold tabular-nums">
         {typeof value === "number" ? value.toLocaleString("sv-SE") : value}
       </div>
       {delta && (
-        <div className={cn("text-xs mt-1 tabular-nums", deltaColor)}>
+        <div className={cn("text-xs mt-1 tabular-nums break-words", deltaColor)}>
           {arrow} {delta.pct > 0 ? "+" : ""}{delta.pct.toFixed(1)}% jmf föregående
         </div>
       )}
+      {panel}
     </div>
   );
 }
 
 
 function Section({ title, children, help }: { title: string; children: React.ReactNode; help?: string }) {
+  const { toggle, panel } = useHelpDisclosure(help);
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <h3 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
-        <span>{title}</span>
-        {help && <HelpTip text={help} />}
+    <div className="min-w-0 rounded-xl border border-border bg-card p-3 sm:p-4">
+      <h3 className="text-sm font-semibold flex items-start gap-1.5">
+        <span className="min-w-0 break-words">{title}</span>
+        {toggle}
       </h3>
-      {children}
+      {panel}
+      <div className="mt-2 min-w-0">{children}</div>
     </div>
   );
 }
