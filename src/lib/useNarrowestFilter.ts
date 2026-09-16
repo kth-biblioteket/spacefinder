@@ -11,6 +11,7 @@ import {
   type MatchOptions,
 } from "@/lib/filterMatch";
 import { pickLocalized, type Lang } from "@/i18n";
+import { makeWorkModeLabel } from "@/lib/workModeLabels";
 
 export type FilterDimension = {
   id: string;
