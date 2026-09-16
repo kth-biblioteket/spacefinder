@@ -71,14 +71,14 @@ export function useNarrowestFilter(
       });
     }
     if (filters.workMode) {
-      const labels: Record<string, string> = {
+      const workModeLabel = makeWorkModeLabel(options, categories, lang, {
         enskilt: t("filters.intent_enskilt"),
         tillsammans: t("filters.intent_tillsammans"),
         grupprum: t("filters.intent_grupprum"),
-      };
+      });
       candidates.push({
         id: "workMode",
-        label: labels[filters.workMode] ?? filters.workMode,
+        label: workModeLabel(filters.workMode),
         remove: (f) => ({ ...f, workMode: null, groupSize: null, freeOnly: false }),
         covers: ["workMode", "groupSize", "freeOnly"],
         granular: false,
