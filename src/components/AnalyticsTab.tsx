@@ -60,7 +60,7 @@ type TrendRow = {
 };
 
 const PRESETS = [
-
+  { key: "today", label: "Idag", hours: 0 },
   { key: "24h", label: "24 timmar", hours: 24 },
   { key: "7d", label: "7 dagar", hours: 24 * 7 },
   { key: "30d", label: "30 dagar", hours: 24 * 30 },
@@ -158,6 +158,9 @@ export function AnalyticsTab({
       const f = customFrom ? startOfDay(customFrom) : startOfDay(new Date());
       const t = customTo ? endOfDay(customTo) : endOfDay(new Date());
       return { from: f, to: t };
+    }
+    if (preset === "today") {
+      return { from: startOfDay(new Date()), to: new Date() };
     }
     const p = PRESETS.find((x) => x.key === preset)!;
     return { from: new Date(Date.now() - p.hours * 3600 * 1000), to: new Date() };
@@ -351,6 +354,27 @@ export function AnalyticsTab({
     const ordered = [1, 2, 3, 4, 5, 6, 0].map((i) => ({ label: names[i], value: counts[i] }));
     return ordered;
   }, [rows]);
+
+  const trafficByDay = useMemo(() => {
+    const counts = new Map<string, number>();
+    const days: { key: string; label: string }[] = [];
+    const start = new Date(from);
+    start.setHours(0, 0, 0, 0);
+    const end = new Date(to);
+    end.setHours(0, 0, 0, 0);
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      days.push({ key, label: format(d, "d/M") });
+      counts.set(key, 0);
+    }
+    for (const r of rows) {
+      if (r.event_type !== "page_view") continue;
+      const d = new Date(r.created_at);
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+      if (counts.has(key)) counts.set(key, (counts.get(key) ?? 0) + 1);
+    }
+    return days.map((d) => ({ label: d.label, value: counts.get(d.key) ?? 0 }));
+  }, [rows, from, to]);
 
   const emptySearches = useMemo(() => {
     const out: { when: string; query?: string; kind?: string; workMode?: string; cats: string }[] = [];
@@ -708,25 +732,14 @@ export function AnalyticsTab({
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between flex-wrap gap-3">
-        <h2 className="text-xl font-bold">Statistik</h2>
-        <div className="flex items-center gap-2 flex-wrap">
-          <div className="inline-flex rounded-full border border-border bg-card overflow-hidden text-sm">
-            {PRESETS.map((p) => (
-              <button
-                key={p.key}
-                type="button"
-                onClick={() => setPreset(p.key)}
-                className={`px-3 py-1.5 ${preset === p.key ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:text-foreground"}`}
-              >
-                {p.label}
-              </button>
-            ))}
-          </div>
+      <div className="space-y-3">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3">
+          <h2 className="truncate text-xl font-bold">Statistik</h2>
           <Button
             type="button"
             variant="outline"
             size="sm"
+            className="shrink-0"
             disabled={rows.length === 0}
             onClick={() =>
               exportAnalyticsToExcel(rows, from, to, {
@@ -736,8 +749,23 @@ export function AnalyticsTab({
               })
             }
           >
-            <Download className="h-4 w-4 mr-2" /> Exportera Excel
+            <Download className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Exportera Excel</span>
+            <span className="sr-only sm:hidden">Exportera Excel</span>
           </Button>
+        </div>
+        <div className="flex flex-wrap gap-2 text-sm">
+          {PRESETS.map((p) => (
+            <button
+              key={p.key}
+              type="button"
+              onClick={() => setPreset(p.key)}
+              aria-pressed={preset === p.key}
+              className={`rounded-full border border-border px-3 py-1.5 ${preset === p.key ? "bg-primary text-primary-foreground border-primary" : "bg-card text-muted-foreground hover:text-foreground"}`}
+            >
+              {p.label}
+            </button>
+          ))}
         </div>
       </div>
 
@@ -753,13 +781,13 @@ export function AnalyticsTab({
         </div>
       )}
 
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-muted-foreground break-words">
         Vald period: {format(from, "d MMM yyyy HH:mm", { locale: sv })} – {format(to, "d MMM yyyy HH:mm", { locale: sv })}
       </p>
       <p className="text-xs text-muted-foreground -mt-4">
-        Statistiken uppdateras automatiskt var 30:e sekund. Håll muspekaren över (eller tryck på)
+        Statistiken uppdateras automatiskt var 30:e sekund. Klicka på
         <Info className="inline h-3.5 w-3.5 mx-1 align-[-2px]" aria-hidden="true" />
-        för en förklaring av respektive fält.
+        för att fälla ut en förklaring av respektive fält.
       </p>
 
       {isLoading ? (
@@ -1162,6 +1190,22 @@ export function AnalyticsTab({
           </div>
 
           <Section
+            title="Trafik per dag"
+            help="Antal sidvisningar för varje enskild dag i vald period. Välj t.ex. 30 dagar ovan för att se utvecklingen dag för dag."
+          >
+            <div className="h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={trafficByDay}>
+                  <XAxis dataKey="label" tick={{ fontSize: 10 }} interval="preserveStartEnd" minTickGap={20} />
+                  <YAxis tick={{ fontSize: 10 }} allowDecimals={false} />
+                  <Tooltip />
+                  <Bar dataKey="value" fill="var(--primary)" />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </Section>
+
+          <Section
             title="Delningar"
             help="Klick på delningsikonen på lokalkorten, samt hur många gånger en delad länk faktiskt öppnats av någon."
           >
@@ -1274,14 +1318,14 @@ function DatePicker({
   onChange: (d: Date | undefined) => void;
 }) {
   return (
-    <div className="flex flex-col gap-1">
+    <div className="flex min-w-0 flex-1 flex-col gap-1 sm:flex-none">
       <span className="text-xs text-muted-foreground">{label}</span>
       <Popover>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             size="sm"
-            className={cn("w-[200px] justify-start text-left font-normal", !value && "text-muted-foreground")}
+            className={cn("w-full sm:w-[200px] justify-start text-left font-normal", !value && "text-muted-foreground")}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
             {value ? format(value, "d MMM yyyy", { locale: sv }) : <span>Välj datum</span>}
@@ -1302,22 +1346,35 @@ function DatePicker({
   );
 }
 
-function HelpTip({ text }: { text: string }) {
-  return (
-    <button
-      type="button"
-      tabIndex={0}
-      title={text}
-      aria-label={text}
-      className="inline-flex shrink-0 text-muted-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring rounded-full align-middle"
-      onClick={(e) => e.preventDefault()}
-    >
-      <Info className="h-3.5 w-3.5" aria-hidden="true" />
-    </button>
-  );
+let helpIdCounter = 0;
+
+function useHelpDisclosure(help?: string) {
+  const [open, setOpen] = useState(false);
+  const [id] = useState(() => `stat-help-${++helpIdCounter}`);
+  if (!help) return { toggle: null, panel: null };
+  return {
+    toggle: (
+      <button
+        type="button"
+        aria-expanded={open}
+        aria-controls={id}
+        aria-label={open ? "Dölj förklaring" : "Visa förklaring"}
+        className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-muted-foreground/70 hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        onClick={() => setOpen((v) => !v)}
+      >
+        <Info className="h-3.5 w-3.5" aria-hidden="true" />
+      </button>
+    ),
+    panel: open ? (
+      <p id={id} className="mt-2 rounded-lg bg-muted/60 p-2 text-xs font-normal leading-relaxed text-muted-foreground break-words">
+        {help}
+      </p>
+    ) : null,
+  };
 }
 
 function Stat({ label, value, prev, help }: { label: string; value: number | string; prev?: number; help?: string }) {
+  const { toggle, panel } = useHelpDisclosure(help);
   let delta: { pct: number; dir: "up" | "down" | "flat" } | null = null;
   if (typeof value === "number" && typeof prev === "number") {
     if (prev === 0 && value === 0) delta = { pct: 0, dir: "flat" };
@@ -1331,32 +1388,35 @@ function Stat({ label, value, prev, help }: { label: string; value: number | str
     delta?.dir === "up" ? "text-emerald-600" : delta?.dir === "down" ? "text-red-600" : "text-muted-foreground";
   const arrow = delta?.dir === "up" ? "▲" : delta?.dir === "down" ? "▼" : "→";
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <div className="text-xs text-muted-foreground flex items-center gap-1">
-        <span>{label}</span>
-        {help && <HelpTip text={help} />}
+    <div className="rounded-xl border border-border bg-card p-3 sm:p-4">
+      <div className="text-xs text-muted-foreground flex items-start gap-1">
+        <span className="min-w-0 break-words">{label}</span>
+        {toggle}
       </div>
-      <div className="mt-1 text-2xl font-bold tabular-nums">
+      <div className="mt-1 text-xl sm:text-2xl font-bold tabular-nums">
         {typeof value === "number" ? value.toLocaleString("sv-SE") : value}
       </div>
       {delta && (
-        <div className={cn("text-xs mt-1 tabular-nums", deltaColor)}>
+        <div className={cn("text-xs mt-1 tabular-nums break-words", deltaColor)}>
           {arrow} {delta.pct > 0 ? "+" : ""}{delta.pct.toFixed(1)}% jmf föregående
         </div>
       )}
+      {panel}
     </div>
   );
 }
 
 
 function Section({ title, children, help }: { title: string; children: React.ReactNode; help?: string }) {
+  const { toggle, panel } = useHelpDisclosure(help);
   return (
-    <div className="rounded-xl border border-border bg-card p-4">
-      <h3 className="text-sm font-semibold mb-2 flex items-center gap-1.5">
-        <span>{title}</span>
-        {help && <HelpTip text={help} />}
+    <div className="min-w-0 rounded-xl border border-border bg-card p-3 sm:p-4">
+      <h3 className="text-sm font-semibold flex items-start gap-1.5">
+        <span className="min-w-0 break-words">{title}</span>
+        {toggle}
       </h3>
-      {children}
+      {panel}
+      <div className="mt-2 min-w-0">{children}</div>
     </div>
   );
 }

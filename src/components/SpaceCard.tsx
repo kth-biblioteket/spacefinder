@@ -25,6 +25,8 @@ import { TableChairIcon } from "./icons/TableChairIcon";
 
 import { type Space } from "@/lib/spaces";
 import { useFilterOptions } from "@/lib/useFilterOptions";
+import { useFilterCategories } from "@/lib/useFilterCategories";
+import { makeWorkModeLabel } from "@/lib/workModeLabels";
 import { cardHiddenRoomTypeLabels, groupRoomLabels, isGroupRoomSpace } from "@/lib/groupRoom";
 
 import { useCardLayout, type CardSectionKey } from "@/lib/useCardLayout";
@@ -97,6 +99,7 @@ export function SpaceCard({
   const headerRoving = useRovingTabIndex();
   const actionRoving = useRovingTabIndex();
   const { data: options = [] } = useFilterOptions();
+  const { data: filterCategories = [] } = useFilterCategories();
   const {
     data: layoutFromDb = [
       "header",
@@ -289,14 +292,16 @@ export function SpaceCard({
 
   // Intent chips on the card: enskilt / tillsammans for regular spaces,
   // "I grupprum" for group-room spaces. Noise level always joins this row.
+  const workModeLabel = makeWorkModeLabel(options, filterCategories, lang, {
+    enskilt: t("filters.intent_enskilt"),
+    tillsammans: t("filters.intent_tillsammans"),
+    grupprum: t("filters.intent_grupprum"),
+  });
   const intentChips: { value: IntentValue; label: string }[] = isGrupprum
-    ? [{ value: "grupprum", label: t("filters.intent_grupprum") }]
+    ? [{ value: "grupprum", label: workModeLabel("grupprum") }]
     : (space.intent ?? [])
         .filter((v): v is IntentValue => v === "enskilt" || v === "tillsammans")
-        .map((v) => ({
-          value: v,
-          label: v === "enskilt" ? t("filters.intent_enskilt") : t("filters.intent_tillsammans"),
-        }));
+        .map((v) => ({ value: v, label: workModeLabel(v) }));
 
   type CategoryChip = { category: string; value: string; key: string; label: string };
   const categoryChips: CategoryChip[] = [
