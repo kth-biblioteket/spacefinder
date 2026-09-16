@@ -221,27 +221,6 @@ services:
     volumes:
       - /local/docker/spacefinder/volumes/storage:/var/lib/storage:z
 
-  pgadmin:
-    container_name: spacefinder-pgadmin
-    image: dpage/pgadmin4
-    restart: unless-stopped
-    networks:
-      - apps-net
-    environment:
-      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL}
-      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD}
-      # Vi sätter SCRIPT_NAME, men vi ser till att Traefik skickar med headern
-      SCRIPT_NAME: /db-admin
-    labels:
-      - "traefik.enable=true"
-      - "traefik.http.routers.spacefinder-pgadmin.rule=Host(`${DOMAIN_NAME}`) && PathPrefix(`/db-admin`)"
-      - "traefik.http.routers.spacefinder-pgadmin.entrypoints=websecure"
-      - "traefik.http.routers.spacefinder-pgadmin.tls=true"
-      - "traefik.http.routers.spacefinder-pgadmin.tls.certresolver=myresolver"
-      - "traefik.http.services.spacefinder-pgadmin.loadbalancer.server.port=80"
-    volumes:
-      - /local/docker/spacefinder/volumes/pgadmin:/var/lib/pgadmin:z
-
 volumes:
   persistent-findspaces-db:
     name: findspaces_persistent-findspaces-db
