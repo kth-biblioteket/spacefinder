@@ -177,28 +177,42 @@ export function AnalyticsTab({
 
   const { data, isLoading } = useQuery({
     queryKey: ["analytics_events", from.toISOString(), to.toISOString()],
-    queryFn: async (): Promise<{ current: Row[]; previous: Row[] }> => {
+    queryFn: async (): Promise<{ current: Row[]; previous: Row[]; truncated: boolean }> => {
+      const CHUNK = 1000;
+      const MAX_ROWS = 50000;
+      const fetchAllEvents = async (fromIso: string, toIso: string) => {
+        const out: Row[] = [];
+        let offset = 0;
+        let truncated = false;
+        for (;;) {
+          const { data: page, error } = await supabase
+            .from("analytics_events")
+            .select("id,event_type,payload,session_id,path,created_at")
+            .gte("created_at", fromIso)
+            .lte("created_at", toIso)
+            .order("created_at", { ascending: false })
+            .range(offset, offset + CHUNK - 1);
+          if (error) throw error;
+          const rows = (page ?? []) as unknown as Row[];
+          out.push(...rows);
+          if (rows.length < CHUNK) break;
+          offset += CHUNK;
+          if (out.length >= MAX_ROWS) {
+            truncated = true;
+            break;
+          }
+        }
+        return { rows: out, truncated };
+      };
+
       const [cur, prev] = await Promise.all([
-        supabase
-          .from("analytics_events")
-          .select("id,event_type,payload,session_id,path,created_at")
-          .gte("created_at", from.toISOString())
-          .lte("created_at", to.toISOString())
-          .order("created_at", { ascending: false })
-          .limit(50000),
-        supabase
-          .from("analytics_events")
-          .select("id,event_type,payload,session_id,path,created_at")
-          .gte("created_at", prevRange.prevFrom.toISOString())
-          .lte("created_at", prevRange.prevTo.toISOString())
-          .order("created_at", { ascending: false })
-          .limit(50000),
+        fetchAllEvents(from.toISOString(), to.toISOString()),
+        fetchAllEvents(prevRange.prevFrom.toISOString(), prevRange.prevTo.toISOString()),
       ]);
-      if (cur.error) throw cur.error;
-      if (prev.error) throw prev.error;
       return {
-        current: (cur.data ?? []) as unknown as Row[],
-        previous: (prev.data ?? []) as unknown as Row[],
+        current: cur.rows,
+        previous: prev.rows,
+        truncated: cur.truncated || prev.truncated,
       };
     },
     enabled: periodValid,
@@ -207,6 +221,8 @@ export function AnalyticsTab({
 
   const rows = data?.current ?? [];
   const prevRows = data?.previous ?? [];
+  const truncated = data?.truncated ?? false;
+
 
 
   const computeTotals = (src: Row[]) => {
@@ -789,6 +805,13 @@ export function AnalyticsTab({
         <Info className="inline h-3.5 w-3.5 mx-1 align-[-2px]" aria-hidden="true" />
         för att fälla ut en förklaring av respektive fält.
       </p>
+      {truncated ? (
+        <p className="text-xs text-muted-foreground -mt-4">
+          Perioden innehåller fler än 50 000 händelser. Endast de senaste 50 000 räknas med – välj en kortare period för exakta siffror.
+        </p>
+      ) : null}
+
+
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Hämtar statistik…</p>
