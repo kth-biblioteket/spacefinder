@@ -805,6 +805,13 @@ export function AnalyticsTab({
         <Info className="inline h-3.5 w-3.5 mx-1 align-[-2px]" aria-hidden="true" />
         för att fälla ut en förklaring av respektive fält.
       </p>
+      {truncated ? (
+        <p className="text-xs text-muted-foreground -mt-4">
+          Perioden innehåller fler än 50 000 händelser. Endast de senaste 50 000 räknas med – välj en kortare period för exakta siffror.
+        </p>
+      ) : null}
+
+
 
       {isLoading ? (
         <p className="text-sm text-muted-foreground">Hämtar statistik…</p>
