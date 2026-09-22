@@ -397,24 +397,34 @@ export function AnalyticsTab({
   }, [rows, from, to]);
 
   const emptySearches = useMemo(() => {
-    const out: { when: string; query?: string; kind?: string; workMode?: string; cats: string }[] = [];
+    const out: {
+      when: string;
+      query?: string;
+      kind?: string;
+      workMode?: string;
+      groupSize?: string;
+      freeOnly?: boolean;
+      cats: string;
+    }[] = [];
     for (const r of rows) {
       if (r.event_type !== "empty_results") continue;
       const p = (r.payload ?? {}) as Record<string, unknown>;
       const cats = Object.entries((p.categories ?? {}) as Record<string, string[]>)
-        .map(([k, v]) => `${k}: ${(v ?? []).join(", ")}`)
+        .map(([k, v]) => `${categoryLabelFor(k, categories)}: ${(v ?? []).join(", ")}`)
         .join(" · ");
       out.push({
         when: new Date(r.created_at).toLocaleString("sv-SE"),
         query: p.query ? String(p.query) : undefined,
         kind: p.spaceKind ? (KIND_LABELS[String(p.spaceKind)] ?? String(p.spaceKind)) : undefined,
         workMode: p.workMode ? String(p.workMode) : undefined,
+        groupSize: p.groupSize ? String(p.groupSize) : undefined,
+        freeOnly: Boolean(p.freeOnly),
         cats,
       });
       if (out.length >= 30) break;
     }
     return out;
-  }, [rows]);
+  }, [rows, categories]);
 
   const emptyCombos = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -422,17 +432,19 @@ export function AnalyticsTab({
       if (r.event_type !== "empty_results") continue;
       const p = (r.payload ?? {}) as Record<string, unknown>;
       const parts: string[] = [];
-      if (p.workMode) parts.push(`läge: ${String(p.workMode)}`);
-      if (p.freeOnly) parts.push("endast lediga");
+      if (p.workMode) parts.push(`${categoryLabelFor("workMode", categories)}: ${String(p.workMode)}`);
+      if (p.groupSize) parts.push(`${categoryLabelFor("groupSize", categories)}: ${String(p.groupSize)}`);
+      if (p.freeOnly) parts.push("Endast lediga nu");
       const cats = (p.categories ?? {}) as Record<string, string[]>;
       for (const [k, v] of Object.entries(cats)) {
-        for (const val of (v ?? []).slice().sort()) parts.push(`${k}: ${val}`);
+        for (const val of (v ?? []).slice().sort()) parts.push(`${categoryLabelFor(k, categories)}: ${val}`);
       }
       const key = parts.length ? parts.sort().join(" · ") : "(inga filter)";
       counts[key] = (counts[key] ?? 0) + 1;
     }
     return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 10);
-  }, [rows]);
+  }, [rows, categories]);
+
 
   const deviceBreakdown = useMemo(() => {
     const counts: Record<string, number> = {};
