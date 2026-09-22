@@ -25,6 +25,7 @@ import { matchesSpace } from "@/lib/filterMatch";
 import { groupRoomLabels, isGroupRoomSpace } from "@/lib/groupRoom";
 import { emptyFilters, type Filters } from "@/components/FilterPanel";
 import type { FilterCategoryRow, FilterOption, Space } from "@/lib/spaces";
+import { analyticsCategoryLabel, analyticsValueLabel } from "@/lib/analyticsLabels";
 
 
 
@@ -94,25 +95,6 @@ const TREND_COLORS = [
   "var(--chart-4, #ef4444)",
   "var(--chart-5, #8b5cf6)",
 ];
-
-function valueLabelFor(categoryKey: string, value: string, filterOptions: FilterOption[]): string {
-  if (categoryKey === "spaceKind") return KIND_LABELS[value] ?? value;
-  if (categoryKey === "freeOnly") return "Endast lediga grupprum";
-  const opt = filterOptions.find((o) => o.category === categoryKey && o.label === value);
-  return opt?.label ?? value;
-}
-
-function categoryLabelFor(key: string, categories: FilterCategoryRow[]): string {
-  if (key === "spaceKind") {
-    return categories.find((c) => c.special_kind === "space_kind")?.title ?? "Kategori";
-  }
-  if (key === "workMode") {
-    return categories.find((c) => c.special_kind === "arbetssatt")?.title ?? "Arbetssätt";
-  }
-  if (key === "groupSize") return "Grupprumsstorlek";
-  if (key === "freeOnly") return "Endast lediga";
-  return categories.find((c) => c.key === key)?.title ?? key;
-}
 
 function buildFiltersFromPayload(p: Record<string, unknown>): Filters {
   const cats = (p.categories ?? {}) as Record<string, string[]>;
@@ -311,38 +293,47 @@ export function AnalyticsTab({
       if (r.event_type !== "filter_change") continue;
       const p = (r.payload ?? {}) as Record<string, unknown>;
       const parts: string[] = [];
-      if (p.spaceKind) parts.push(`kategori: ${KIND_LABELS[String(p.spaceKind)] ?? String(p.spaceKind)}`);
-      if (p.query) parts.push("sökord");
-      if (p.workMode) parts.push(`läge: ${String(p.workMode)}`);
-      if (p.groupSize) parts.push(`storlek: ${String(p.groupSize)}`);
-      if (p.freeOnly) parts.push("endast lediga grupprum");
+      if (p.spaceKind) parts.push(`${analyticsCategoryLabel("spaceKind", categories)}: ${analyticsValueLabel("spaceKind", String(p.spaceKind), categories, filterOptions)}`);
+      if (p.query) parts.push("Sökord");
+      if (p.workMode) parts.push(`${analyticsCategoryLabel("workMode", categories)}: ${analyticsValueLabel("workMode", String(p.workMode), categories, filterOptions)}`);
+      if (p.groupSize) parts.push(`${analyticsCategoryLabel("groupSize", categories)}: ${analyticsValueLabel("groupSize", String(p.groupSize), categories, filterOptions)}`);
+      if (p.freeOnly) parts.push("Endast lediga grupprum");
       const cats = (p.categories ?? {}) as Record<string, string[]>;
       for (const [k, v] of Object.entries(cats)) {
-        for (const val of (v ?? []).slice().sort()) parts.push(`${k}: ${val}`);
+        for (const val of (v ?? []).slice().sort()) parts.push(`${analyticsCategoryLabel(k, categories)}: ${analyticsValueLabel(k, val, categories, filterOptions)}`);
       }
       if (!parts.length) continue;
       const key = parts.sort().join(" · ");
       counts[key] = (counts[key] ?? 0) + 1;
     }
     return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 10);
-  }, [rows]);
+  }, [rows, categories, filterOptions]);
 
   const topFilters = useMemo(() => {
     const counts: Record<string, number> = {};
     for (const r of rows) {
       if (r.event_type !== "filter_change") continue;
       const p = (r.payload ?? {}) as Record<string, unknown>;
-      if (p.query) counts["sökord"] = (counts["sökord"] ?? 0) + 1;
-      if (p.workMode) counts[`läge: ${String(p.workMode)}`] = (counts[`läge: ${String(p.workMode)}`] ?? 0) + 1;
-      if (p.groupSize) counts[`storlek: ${String(p.groupSize)}`] = (counts[`storlek: ${String(p.groupSize)}`] ?? 0) + 1;
-      if (p.freeOnly) counts["endast lediga grupprum"] = (counts["endast lediga grupprum"] ?? 0) + 1;
+      if (p.query) counts["Sökord"] = (counts["Sökord"] ?? 0) + 1;
+      if (p.workMode) {
+        const label = `${analyticsCategoryLabel("workMode", categories)}: ${analyticsValueLabel("workMode", String(p.workMode), categories, filterOptions)}`;
+        counts[label] = (counts[label] ?? 0) + 1;
+      }
+      if (p.groupSize) {
+        const label = `${analyticsCategoryLabel("groupSize", categories)}: ${analyticsValueLabel("groupSize", String(p.groupSize), categories, filterOptions)}`;
+        counts[label] = (counts[label] ?? 0) + 1;
+      }
+      if (p.freeOnly) counts["Endast lediga grupprum"] = (counts["Endast lediga grupprum"] ?? 0) + 1;
       const cats = (p.categories ?? {}) as Record<string, string[]>;
       for (const [cat, vals] of Object.entries(cats)) {
-        for (const v of vals ?? []) counts[`${cat}: ${v}`] = (counts[`${cat}: ${v}`] ?? 0) + 1;
+        for (const v of vals ?? []) {
+          const label = `${analyticsCategoryLabel(cat, categories)}: ${analyticsValueLabel(cat, v, categories, filterOptions)}`;
+          counts[label] = (counts[label] ?? 0) + 1;
+        }
       }
     }
     return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 15);
-  }, [rows]);
+  }, [rows, categories, filterOptions]);
 
   const topQueries = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -410,13 +401,13 @@ export function AnalyticsTab({
       if (r.event_type !== "empty_results") continue;
       const p = (r.payload ?? {}) as Record<string, unknown>;
       const cats = Object.entries((p.categories ?? {}) as Record<string, string[]>)
-        .map(([k, v]) => `${categoryLabelFor(k, categories)}: ${(v ?? []).join(", ")}`)
+        .map(([k, v]) => `${analyticsCategoryLabel(k, categories)}: ${(v ?? []).map((value) => analyticsValueLabel(k, value, categories, filterOptions)).join(", ")}`)
         .join(" · ");
       out.push({
         when: new Date(r.created_at).toLocaleString("sv-SE"),
         query: p.query ? String(p.query) : undefined,
         kind: p.spaceKind ? (KIND_LABELS[String(p.spaceKind)] ?? String(p.spaceKind)) : undefined,
-        workMode: p.workMode ? String(p.workMode) : undefined,
+        workMode: p.workMode ? analyticsValueLabel("workMode", String(p.workMode), categories, filterOptions) : undefined,
         groupSize: p.groupSize ? String(p.groupSize) : undefined,
         freeOnly: Boolean(p.freeOnly),
         cats,
@@ -424,7 +415,7 @@ export function AnalyticsTab({
       if (out.length >= 30) break;
     }
     return out;
-  }, [rows, categories]);
+  }, [rows, categories, filterOptions]);
 
   const emptyCombos = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -432,18 +423,18 @@ export function AnalyticsTab({
       if (r.event_type !== "empty_results") continue;
       const p = (r.payload ?? {}) as Record<string, unknown>;
       const parts: string[] = [];
-      if (p.workMode) parts.push(`${categoryLabelFor("workMode", categories)}: ${String(p.workMode)}`);
-      if (p.groupSize) parts.push(`${categoryLabelFor("groupSize", categories)}: ${String(p.groupSize)}`);
+      if (p.workMode) parts.push(`${analyticsCategoryLabel("workMode", categories)}: ${analyticsValueLabel("workMode", String(p.workMode), categories, filterOptions)}`);
+      if (p.groupSize) parts.push(`${analyticsCategoryLabel("groupSize", categories)}: ${analyticsValueLabel("groupSize", String(p.groupSize), categories, filterOptions)}`);
       if (p.freeOnly) parts.push("Endast lediga nu");
       const cats = (p.categories ?? {}) as Record<string, string[]>;
       for (const [k, v] of Object.entries(cats)) {
-        for (const val of (v ?? []).slice().sort()) parts.push(`${categoryLabelFor(k, categories)}: ${val}`);
+        for (const val of (v ?? []).slice().sort()) parts.push(`${analyticsCategoryLabel(k, categories)}: ${analyticsValueLabel(k, val, categories, filterOptions)}`);
       }
       const key = parts.length ? parts.sort().join(" · ") : "(inga filter)";
       counts[key] = (counts[key] ?? 0) + 1;
     }
     return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 10);
-  }, [rows, categories]);
+  }, [rows, categories, filterOptions]);
 
 
   const deviceBreakdown = useMemo(() => {
@@ -576,9 +567,9 @@ export function AnalyticsTab({
       }
       items.push({
         categoryKey,
-        categoryLabel: categoryLabelFor(categoryKey, categories),
+        categoryLabel: analyticsCategoryLabel(categoryKey, categories),
         valueKey,
-        valueLabel: valueLabelFor(categoryKey, valueKey, filterOptions),
+        valueLabel: analyticsValueLabel(categoryKey, valueKey, categories, filterOptions),
         demand: demandCount,
         supply,
       });
@@ -595,13 +586,13 @@ export function AnalyticsTab({
       const filters = buildFiltersFromPayload(p);
       const parts: string[] = [];
       if (filters.query) parts.push(`Sökord: ”${filters.query}”`);
-      if (p.spaceKind) parts.push(`${categoryLabelFor("spaceKind", categories)}: ${valueLabelFor("spaceKind", String(p.spaceKind), filterOptions)}`);
-      if (filters.workMode) parts.push(`${categoryLabelFor("workMode", categories)}: ${filters.workMode}`);
-      if (filters.groupSize) parts.push(`${categoryLabelFor("groupSize", categories)}: ${filters.groupSize}`);
+      if (p.spaceKind) parts.push(`${analyticsCategoryLabel("spaceKind", categories)}: ${analyticsValueLabel("spaceKind", String(p.spaceKind), categories, filterOptions)}`);
+      if (filters.workMode) parts.push(`${analyticsCategoryLabel("workMode", categories)}: ${analyticsValueLabel("workMode", filters.workMode, categories, filterOptions)}`);
+      if (filters.groupSize) parts.push(`${analyticsCategoryLabel("groupSize", categories)}: ${analyticsValueLabel("groupSize", filters.groupSize, categories, filterOptions)}`);
       if (filters.freeOnly) parts.push("Endast lediga grupprum");
       for (const [cat, vals] of Object.entries(filters.byCategory)) {
         for (const v of (vals ?? []).slice().sort()) {
-          parts.push(`${categoryLabelFor(cat, categories)}: ${valueLabelFor(cat, v, filterOptions)}`);
+          parts.push(`${analyticsCategoryLabel(cat, categories)}: ${analyticsValueLabel(cat, v, categories, filterOptions)}`);
         }
       }
       // Endast riktiga kombinationer (minst två aktiva filter)
@@ -636,13 +627,13 @@ export function AnalyticsTab({
       const filters = buildFiltersFromPayload(p);
       const parts: string[] = [];
       if (filters.query) parts.push(`sökord: ${filters.query}`);
-      if (p.spaceKind) parts.push(`kategori: ${KIND_LABELS[String(p.spaceKind)] ?? String(p.spaceKind)}`);
-      if (filters.workMode) parts.push(`${categoryLabelFor("workMode", categories)}: ${filters.workMode}`);
-      if (filters.groupSize) parts.push(`${categoryLabelFor("groupSize", categories)}: ${filters.groupSize}`);
+      if (p.spaceKind) parts.push(`${analyticsCategoryLabel("spaceKind", categories)}: ${analyticsValueLabel("spaceKind", String(p.spaceKind), categories, filterOptions)}`);
+      if (filters.workMode) parts.push(`${analyticsCategoryLabel("workMode", categories)}: ${analyticsValueLabel("workMode", filters.workMode, categories, filterOptions)}`);
+      if (filters.groupSize) parts.push(`${analyticsCategoryLabel("groupSize", categories)}: ${analyticsValueLabel("groupSize", filters.groupSize, categories, filterOptions)}`);
       if (filters.freeOnly) parts.push("Endast lediga nu");
       for (const [cat, vals] of Object.entries(filters.byCategory)) {
-        const catLabel = categoryLabelFor(cat, categories);
-        for (const v of vals) parts.push(`${catLabel}: ${valueLabelFor(cat, v, filterOptions)}`);
+        const catLabel = analyticsCategoryLabel(cat, categories);
+        for (const v of vals) parts.push(`${catLabel}: ${analyticsValueLabel(cat, v, categories, filterOptions)}`);
       }
       const key = parts.sort().join(" · ");
       const existing = combos.get(key);
@@ -657,11 +648,11 @@ export function AnalyticsTab({
     for (const { filters, displayParts, count } of combos.values()) {
       const candidates: { label: string; test: Filters }[] = [];
       if (filters.query) candidates.push({ label: "sökord", test: { ...filters, query: "" } });
-      if (filters.workMode) candidates.push({ label: "läge", test: { ...filters, workMode: null } });
+      if (filters.workMode) candidates.push({ label: analyticsCategoryLabel("workMode", categories).toLocaleLowerCase("sv-SE"), test: { ...filters, workMode: null } });
       if (filters.groupSize) candidates.push({ label: "grupprumsstorlek", test: { ...filters, groupSize: null } });
       if (filters.freeOnly) candidates.push({ label: "endast lediga", test: { ...filters, freeOnly: false } });
       for (const [cat, vals] of Object.entries(filters.byCategory)) {
-        const catLabel = categoryLabelFor(cat, categories);
+        const catLabel = analyticsCategoryLabel(cat, categories);
         for (const v of vals) {
           const nextVals = vals.filter((x) => x !== v);
           const nextByCat = { ...filters.byCategory, [cat]: nextVals };
@@ -673,7 +664,7 @@ export function AnalyticsTab({
             nextFilters = { ...filters, byCategory: nextByCat };
           }
           candidates.push({
-            label: `${catLabel}: ${valueLabelFor(cat, v, filterOptions)}`,
+            label: `${catLabel}: ${analyticsValueLabel(cat, v, categories, filterOptions)}`,
             test: nextFilters,
           });
         }
@@ -778,6 +769,8 @@ export function AnalyticsTab({
                 demandSupply: comboDemandSupply,
                 emptyWithAlternatives: emptyResultsWithSuggestions,
                 trend: trendData,
+                categories,
+                filterOptions,
               })
             }
           >
@@ -1129,9 +1122,9 @@ export function AnalyticsTab({
                     <div className="text-xs text-muted-foreground">{e.when}</div>
                     <div className="break-words">
                       {e.query ? <span className="font-medium">"{e.query}"</span> : <span className="italic text-muted-foreground">ingen sökterm</span>}
-                      {e.kind && <span className="text-muted-foreground"> · kategori: {e.kind}</span>}
-                      {e.workMode && <span className="text-muted-foreground"> · {categoryLabelFor("workMode", categories)}: {e.workMode}</span>}
-                      {e.groupSize && <span className="text-muted-foreground"> · {categoryLabelFor("groupSize", categories)}: {e.groupSize}</span>}
+                      {e.kind && <span className="text-muted-foreground"> · {analyticsCategoryLabel("spaceKind", categories)}: {e.kind}</span>}
+                      {e.workMode && <span className="text-muted-foreground"> · {analyticsCategoryLabel("workMode", categories)}: {e.workMode}</span>}
+                      {e.groupSize && <span className="text-muted-foreground"> · {analyticsCategoryLabel("groupSize", categories)}: {e.groupSize}</span>}
                       {e.freeOnly && <span className="text-muted-foreground"> · endast lediga nu</span>}
                       {e.cats && <span className="text-muted-foreground"> · {e.cats}</span>}
                     </div>

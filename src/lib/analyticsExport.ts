@@ -1,4 +1,6 @@
 import * as XLSX from "xlsx";
+import { analyticsCategoryLabel, analyticsValueLabel } from "./analyticsLabels";
+import type { FilterCategoryRow, FilterOption } from "./spaces";
 
 type Row = {
   id: number;
@@ -51,6 +53,8 @@ export function exportAnalyticsToExcel(
     demandSupply: DemandSupplyItem[];
     emptyWithAlternatives: EmptyWithSuggestion[];
     trend: TrendData;
+    categories: FilterCategoryRow[];
+    filterOptions: FilterOption[];
   },
 ): void {
 
@@ -139,6 +143,8 @@ export function exportAnalyticsToExcel(
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(locRows), "Lokaler");
 
   // Filter
+  const categories = extra?.categories ?? [];
+  const filterOptions = extra?.filterOptions ?? [];
   const filterCounts: Record<string, number> = {};
   const queryCounts: Record<string, number> = {};
   for (const r of rows) {
@@ -149,12 +155,21 @@ export function exportAnalyticsToExcel(
       const q = String(p.query).trim().toLowerCase();
       if (q) queryCounts[q] = (queryCounts[q] ?? 0) + 1;
     }
-    if (p.workMode) filterCounts[`läge: ${String(p.workMode)}`] = (filterCounts[`läge: ${String(p.workMode)}`] ?? 0) + 1;
-    if (p.groupSize) filterCounts[`storlek: ${String(p.groupSize)}`] = (filterCounts[`storlek: ${String(p.groupSize)}`] ?? 0) + 1;
-    if (p.freeOnly) filterCounts["endast lediga grupprum"] = (filterCounts["endast lediga grupprum"] ?? 0) + 1;
+    if (p.workMode) {
+      const label = `${analyticsCategoryLabel("workMode", categories)}: ${analyticsValueLabel("workMode", String(p.workMode), categories, filterOptions)}`;
+      filterCounts[label] = (filterCounts[label] ?? 0) + 1;
+    }
+    if (p.groupSize) {
+      const label = `${analyticsCategoryLabel("groupSize", categories)}: ${analyticsValueLabel("groupSize", String(p.groupSize), categories, filterOptions)}`;
+      filterCounts[label] = (filterCounts[label] ?? 0) + 1;
+    }
+    if (p.freeOnly) filterCounts["Endast lediga grupprum"] = (filterCounts["Endast lediga grupprum"] ?? 0) + 1;
     const cats = (p.categories ?? {}) as Record<string, string[]>;
     for (const [cat, vals] of Object.entries(cats)) {
-      for (const v of vals ?? []) filterCounts[`${cat}: ${v}`] = (filterCounts[`${cat}: ${v}`] ?? 0) + 1;
+      for (const v of vals ?? []) {
+        const label = `${analyticsCategoryLabel(cat, categories)}: ${analyticsValueLabel(cat, v, categories, filterOptions)}`;
+        filterCounts[label] = (filterCounts[label] ?? 0) + 1;
+      }
     }
   }
   const filterRows = [
@@ -178,12 +193,12 @@ export function exportAnalyticsToExcel(
     if (r.event_type !== "empty_results") continue;
     const p = (r.payload ?? {}) as Record<string, unknown>;
     const cats = Object.entries((p.categories ?? {}) as Record<string, string[]>)
-      .map(([k, v]) => `${k}: ${(v ?? []).join(", ")}`)
+      .map(([k, v]) => `${analyticsCategoryLabel(k, categories)}: ${(v ?? []).map((value) => analyticsValueLabel(k, value, categories, filterOptions)).join(", ")}`)
       .join(" · ");
     emptyRows.push([
       new Date(r.created_at).toLocaleString("sv-SE"),
       p.query ? String(p.query) : "",
-      p.workMode ? String(p.workMode) : "",
+      p.workMode ? analyticsValueLabel("workMode", String(p.workMode), categories, filterOptions) : "",
       p.groupSize ? String(p.groupSize) : "",
       p.freeOnly ? "Ja" : "",
       cats,
@@ -197,12 +212,12 @@ export function exportAnalyticsToExcel(
     if (r.event_type !== "empty_results") continue;
     const p = (r.payload ?? {}) as Record<string, unknown>;
     const parts: string[] = [];
-    if (p.workMode) parts.push(`arbetssätt:${String(p.workMode)}`);
-    if (p.groupSize) parts.push(`storlek:${String(p.groupSize)}`);
-    if (p.freeOnly) parts.push("endast lediga nu");
+    if (p.workMode) parts.push(`${analyticsCategoryLabel("workMode", categories)}: ${analyticsValueLabel("workMode", String(p.workMode), categories, filterOptions)}`);
+    if (p.groupSize) parts.push(`${analyticsCategoryLabel("groupSize", categories)}: ${analyticsValueLabel("groupSize", String(p.groupSize), categories, filterOptions)}`);
+    if (p.freeOnly) parts.push("Endast lediga nu");
     const cats = (p.categories ?? {}) as Record<string, string[]>;
     for (const [k, v] of Object.entries(cats)) {
-      for (const val of (v ?? []).slice().sort()) parts.push(`${k}:${val}`);
+      for (const val of (v ?? []).slice().sort()) parts.push(`${analyticsCategoryLabel(k, categories)}: ${analyticsValueLabel(k, val, categories, filterOptions)}`);
     }
     const key = parts.length ? parts.sort().join(" · ") : "(inga filter)";
     comboCounts[key] = (comboCounts[key] ?? 0) + 1;
