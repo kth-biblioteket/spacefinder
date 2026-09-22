@@ -1130,7 +1130,9 @@ export function AnalyticsTab({
                     <div className="break-words">
                       {e.query ? <span className="font-medium">"{e.query}"</span> : <span className="italic text-muted-foreground">ingen sökterm</span>}
                       {e.kind && <span className="text-muted-foreground"> · kategori: {e.kind}</span>}
-                      {e.workMode && <span className="text-muted-foreground"> · läge: {e.workMode}</span>}
+                      {e.workMode && <span className="text-muted-foreground"> · {categoryLabelFor("workMode", categories)}: {e.workMode}</span>}
+                      {e.groupSize && <span className="text-muted-foreground"> · {categoryLabelFor("groupSize", categories)}: {e.groupSize}</span>}
+                      {e.freeOnly && <span className="text-muted-foreground"> · endast lediga nu</span>}
                       {e.cats && <span className="text-muted-foreground"> · {e.cats}</span>}
                     </div>
                   </li>
