@@ -1122,7 +1122,7 @@ export function AnalyticsTab({
                     <div className="text-xs text-muted-foreground">{e.when}</div>
                     <div className="break-words">
                       {e.query ? <span className="font-medium">"{e.query}"</span> : <span className="italic text-muted-foreground">ingen sökterm</span>}
-                      {e.kind && <span className="text-muted-foreground"> · kategori: {e.kind}</span>}
+                      {e.kind && <span className="text-muted-foreground"> · {analyticsCategoryLabel("spaceKind", categories)}: {e.kind}</span>}
                       {e.workMode && <span className="text-muted-foreground"> · {analyticsCategoryLabel("workMode", categories)}: {e.workMode}</span>}
                       {e.groupSize && <span className="text-muted-foreground"> · {analyticsCategoryLabel("groupSize", categories)}: {e.groupSize}</span>}
                       {e.freeOnly && <span className="text-muted-foreground"> · endast lediga nu</span>}
