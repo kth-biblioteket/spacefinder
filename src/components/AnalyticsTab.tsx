@@ -103,8 +103,12 @@ function valueLabelFor(categoryKey: string, value: string, filterOptions: Filter
 }
 
 function categoryLabelFor(key: string, categories: FilterCategoryRow[]): string {
-  if (key === "spaceKind") return "Kategori";
-  if (key === "workMode") return "Läge";
+  if (key === "spaceKind") {
+    return categories.find((c) => c.special_kind === "space_kind")?.title ?? "Kategori";
+  }
+  if (key === "workMode") {
+    return categories.find((c) => c.special_kind === "arbetssatt")?.title ?? "Arbetssätt";
+  }
   if (key === "groupSize") return "Grupprumsstorlek";
   if (key === "freeOnly") return "Endast lediga";
   return categories.find((c) => c.key === key)?.title ?? key;
