@@ -637,9 +637,9 @@ export function AnalyticsTab({
       const parts: string[] = [];
       if (filters.query) parts.push(`sökord: ${filters.query}`);
       if (p.spaceKind) parts.push(`kategori: ${KIND_LABELS[String(p.spaceKind)] ?? String(p.spaceKind)}`);
-      if (filters.workMode) parts.push(`läge: ${filters.workMode}`);
-      if (filters.groupSize) parts.push(`storlek: ${filters.groupSize}`);
-      if (filters.freeOnly) parts.push("endast lediga grupprum");
+      if (filters.workMode) parts.push(`${categoryLabelFor("workMode", categories)}: ${filters.workMode}`);
+      if (filters.groupSize) parts.push(`${categoryLabelFor("groupSize", categories)}: ${filters.groupSize}`);
+      if (filters.freeOnly) parts.push("Endast lediga nu");
       for (const [cat, vals] of Object.entries(filters.byCategory)) {
         const catLabel = categoryLabelFor(cat, categories);
         for (const v of vals) parts.push(`${catLabel}: ${valueLabelFor(cat, v, filterOptions)}`);
