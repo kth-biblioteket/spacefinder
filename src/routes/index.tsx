@@ -484,19 +484,26 @@ function SpaceFinderApp() {
     }),
   );
 
+  // "Endast lediga" räknar alla rum som upptagna tills tillgänglighetsdatan
+  // kommit, vilket annars loggar en falsk nollträff under laddningen.
+  const availabilityPending = filters.freeOnly && liveActive && availability === undefined;
+
   useEffect(() => {
-    if (!isLoading && hasActiveFilter && filtered.length === 0) {
+    if (!isLoading && !availabilityPending && hasActiveFilter && filtered.length === 0) {
       track("empty_results", {
         query: filters.query.trim() || undefined,
         spaceKind: filters.spaceKind ?? undefined,
         workMode: filters.workMode ?? undefined,
+        groupSize: filters.groupSize ?? undefined,
+        freeOnly: filters.freeOnly || undefined,
         categories: Object.fromEntries(
           Object.entries(filters.byCategory).filter(([, v]) => v.length > 0),
         ),
       });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoading, hasActiveFilter, filtered.length]);
+  }, [isLoading, availabilityPending, hasActiveFilter, filtered.length]);
+
 
   return (
       <div className="max-w-7xl mx-auto px-4 sm:px-6 py-4 lg:grid lg:grid-cols-[320px_1fr] lg:gap-6">

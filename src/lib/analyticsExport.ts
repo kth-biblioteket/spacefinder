@@ -171,7 +171,9 @@ export function exportAnalyticsToExcel(
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(queryRows), "Sökord");
 
   // Sök utan träff
-  const emptyRows: (string | number)[][] = [["Tid", "Sökord", "Läge", "Kategorier"]];
+  const emptyRows: (string | number)[][] = [
+    ["Tid", "Sökord", "Arbetssätt", "Grupprumsstorlek", "Endast lediga nu", "Kategorier"],
+  ];
   for (const r of rows) {
     if (r.event_type !== "empty_results") continue;
     const p = (r.payload ?? {}) as Record<string, unknown>;
@@ -182,6 +184,8 @@ export function exportAnalyticsToExcel(
       new Date(r.created_at).toLocaleString("sv-SE"),
       p.query ? String(p.query) : "",
       p.workMode ? String(p.workMode) : "",
+      p.groupSize ? String(p.groupSize) : "",
+      p.freeOnly ? "Ja" : "",
       cats,
     ]);
   }
@@ -193,8 +197,9 @@ export function exportAnalyticsToExcel(
     if (r.event_type !== "empty_results") continue;
     const p = (r.payload ?? {}) as Record<string, unknown>;
     const parts: string[] = [];
-    if (p.workMode) parts.push(`läge:${String(p.workMode)}`);
-    if (p.freeOnly) parts.push("endast lediga");
+    if (p.workMode) parts.push(`arbetssätt:${String(p.workMode)}`);
+    if (p.groupSize) parts.push(`storlek:${String(p.groupSize)}`);
+    if (p.freeOnly) parts.push("endast lediga nu");
     const cats = (p.categories ?? {}) as Record<string, string[]>;
     for (const [k, v] of Object.entries(cats)) {
       for (const val of (v ?? []).slice().sort()) parts.push(`${k}:${val}`);
