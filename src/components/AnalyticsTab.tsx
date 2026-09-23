@@ -148,6 +148,11 @@ export function AnalyticsTab({
     if (preset === "today") {
       return { from: startOfDay(new Date()), to: new Date() };
     }
+    if (preset === "yesterday") {
+      const d = new Date();
+      d.setDate(d.getDate() - 1);
+      return { from: startOfDay(d), to: endOfDay(d) };
+    }
     const p = PRESETS.find((x) => x.key === preset)!;
     return { from: new Date(Date.now() - p.hours * 3600 * 1000), to: new Date() };
   }, [preset, customFrom, customTo]);
