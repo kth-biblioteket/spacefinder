@@ -62,7 +62,7 @@ type TrendRow = {
 
 const PRESETS = [
   { key: "today", label: "Idag", hours: 0 },
-  { key: "24h", label: "24 timmar", hours: 24 },
+  { key: "yesterday", label: "Igår", hours: 0 },
   { key: "7d", label: "7 dagar", hours: 24 * 7 },
   { key: "30d", label: "30 dagar", hours: 24 * 30 },
   { key: "90d", label: "90 dagar", hours: 24 * 90 },
