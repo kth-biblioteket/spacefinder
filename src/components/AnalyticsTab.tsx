@@ -889,6 +889,46 @@ export function AnalyticsTab({
           </p>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <Section
+              title="Enhet (sidvisningar)"
+              help="Fördelning mellan mobil, surfplatta och desktop, baserat på sidvisningar."
+            >
+              {deviceBreakdown.length === 0 ? <Empty /> : (
+                <ul className="space-y-2">
+                  {deviceBreakdown.map((d) => (
+                    <li key={d.key} className="text-sm">
+                      <div className="flex items-center justify-between">
+                        <span>{d.label}</span>
+                        <span className="font-mono tabular-nums text-muted-foreground">
+                          {d.count.toLocaleString("sv-SE")} · {(d.pct * 100).toFixed(0)}%
+                        </span>
+                      </div>
+                      <div className="mt-1 h-2 rounded bg-muted overflow-hidden">
+                        <div className="h-full bg-primary" style={{ width: `${d.pct * 100}%` }} />
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </Section>
+            <Section
+              title="Källor (referrer / UTM)"
+              help="Varifrån besökarna kom: ”direkt” = ingen känd hänvisande sida, annars domän eller UTM-kampanj i länken."
+            >
+              {sourceBreakdown.length === 0 ? <Empty /> : (
+                <ol className="divide-y divide-border">
+                  {sourceBreakdown.map(([label, count]) => (
+                    <li key={label} className="flex flex-wrap items-baseline justify-between py-2 text-sm gap-x-3">
+                      <span className="break-words min-w-0">{label}</span>
+                      <span className="font-mono tabular-nums text-muted-foreground">{count}</span>
+                    </li>
+                  ))}
+                </ol>
+              )}
+            </Section>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Stat
               label="Sessioner som fällde ut infotext"
               value={`${(totals.expandRate * 100).toFixed(1)}%`}
