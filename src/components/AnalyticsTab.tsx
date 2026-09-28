@@ -522,6 +522,34 @@ export function AnalyticsTab({
     return (s: Space) => isGroupRoomSpace(s, labels);
   }, [filterOptions]);
 
+  const topGroupRooms = useMemo(() => {
+    const groupRoomIds = new Set(spaces.filter((s) => isGroupRoom(s)).map((s) => s.id));
+    const counts: Record<
+      string,
+      { name: string; count: number; expand: number; bookNow: number; groupBooking: number; booking: number; map: number }
+    > = {};
+    for (const r of rows) {
+      if (!["card_expand", "booking_link_click", "map_link_click"].includes(r.event_type)) continue;
+      const p = (r.payload ?? {}) as Record<string, unknown>;
+      const id = String(p.space_id ?? "");
+      if (!id || !groupRoomIds.has(id)) continue;
+      const name = String(p.name ?? id);
+      const e = counts[id] ?? { name, count: 0, expand: 0, bookNow: 0, groupBooking: 0, booking: 0, map: 0 };
+      e.name = name;
+      e.count++;
+      if (r.event_type === "card_expand") e.expand++;
+      else if (r.event_type === "map_link_click") e.map++;
+      else {
+        const kind = String(p.kind ?? "");
+        if (kind === "book_now") e.bookNow++;
+        else if (kind === "group_booking") e.groupBooking++;
+        else e.booking++;
+      }
+      counts[id] = e;
+    }
+    return Object.entries(counts).map(([id, v]) => ({ id, ...v })).sort((a, b) => b.count - a.count).slice(0, 10);
+  }, [rows, spaces, isGroupRoom]);
+
   const demandSupply = useMemo<DemandSupplyItem[]>(() => {
     const demand = new Map<string, number>();
     const add = (categoryKey: string, value: string) => {
