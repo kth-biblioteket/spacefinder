@@ -522,6 +522,34 @@ export function AnalyticsTab({
     return (s: Space) => isGroupRoomSpace(s, labels);
   }, [filterOptions]);
 
+  const topGroupRooms = useMemo(() => {
+    const groupRoomIds = new Set(spaces.filter((s) => isGroupRoom(s)).map((s) => s.id));
+    const counts: Record<
+      string,
+      { name: string; count: number; expand: number; bookNow: number; groupBooking: number; booking: number; map: number }
+    > = {};
+    for (const r of rows) {
+      if (!["card_expand", "booking_link_click", "map_link_click"].includes(r.event_type)) continue;
+      const p = (r.payload ?? {}) as Record<string, unknown>;
+      const id = String(p.space_id ?? "");
+      if (!id || !groupRoomIds.has(id)) continue;
+      const name = String(p.name ?? id);
+      const e = counts[id] ?? { name, count: 0, expand: 0, bookNow: 0, groupBooking: 0, booking: 0, map: 0 };
+      e.name = name;
+      e.count++;
+      if (r.event_type === "card_expand") e.expand++;
+      else if (r.event_type === "map_link_click") e.map++;
+      else {
+        const kind = String(p.kind ?? "");
+        if (kind === "book_now") e.bookNow++;
+        else if (kind === "group_booking") e.groupBooking++;
+        else e.booking++;
+      }
+      counts[id] = e;
+    }
+    return Object.entries(counts).map(([id, v]) => ({ id, ...v })).sort((a, b) => b.count - a.count).slice(0, 10);
+  }, [rows, spaces, isGroupRoom]);
+
   const demandSupply = useMemo<DemandSupplyItem[]>(() => {
     const demand = new Map<string, number>();
     const add = (categoryKey: string, value: string) => {
@@ -996,6 +1024,27 @@ export function AnalyticsTab({
                     </div>
                     <div className="mt-0.5 text-xs text-muted-foreground tabular-nums">
                       {c.expand} infotext · {c.booking} bokningsklick · {c.map} kartklick
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </Section>
+
+          <Section
+            title="Mest engagerande grupprum"
+            help="Topplista över grupprum med flest interaktioner. Totalen är summan av utfällda infotexter (i-ikonen), klick på ”Boka nu” och ”Boka grupprum”, övriga bokningsklick (”Se schema”) och kartklick — varje typ redovisas separat."
+          >
+            {topGroupRooms.length === 0 ? <Empty /> : (
+              <ol className="divide-y divide-border">
+                {topGroupRooms.map((c) => (
+                  <li key={c.id} className="py-2 text-sm">
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+                      <span className="break-words min-w-0 font-medium">{c.name}</span>
+                      <span className="font-mono tabular-nums text-muted-foreground">{c.count} totalt</span>
+                    </div>
+                    <div className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+                      {c.expand} infotext · {c.bookNow} ”Boka nu” · {c.groupBooking} ”Boka grupprum” · {c.booking} ”Se schema” · {c.map} kartklick
                     </div>
                   </li>
                 ))}
