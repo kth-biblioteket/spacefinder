@@ -1031,6 +1031,27 @@ export function AnalyticsTab({
             )}
           </Section>
 
+          <Section
+            title="Mest engagerande grupprum"
+            help="Topplista över grupprum med flest interaktioner. Totalen är summan av utfällda infotexter (i-ikonen), klick på ”Boka nu” och ”Boka grupprum”, övriga bokningsklick (”Se schema”) och kartklick — varje typ redovisas separat."
+          >
+            {topGroupRooms.length === 0 ? <Empty /> : (
+              <ol className="divide-y divide-border">
+                {topGroupRooms.map((c) => (
+                  <li key={c.id} className="py-2 text-sm">
+                    <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+                      <span className="break-words min-w-0 font-medium">{c.name}</span>
+                      <span className="font-mono tabular-nums text-muted-foreground">{c.count} totalt</span>
+                    </div>
+                    <div className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+                      {c.expand} infotext · {c.bookNow} ”Boka nu” · {c.groupBooking} ”Boka grupprum” · {c.booking} ”Se schema” · {c.map} kartklick
+                    </div>
+                  </li>
+                ))}
+              </ol>
+            )}
+          </Section>
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Section
               title="Mest använda filter"
