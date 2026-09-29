@@ -1102,58 +1102,6 @@ export function AnalyticsTab({
           </Section>
 
           <Section
-            title="Efterfrågan vs utbud per filterkombination"
-            help="De vanligaste kombinationerna av minst två filter, jämfört med hur många lokaler som faktiskt matchar hela kombinationen. Få matchande lokaler på en efterfrågad kombination visar var utbudet inte räcker till."
-          >
-            {comboDemandSupply.length === 0 ? <Empty /> : (
-              <ul className="divide-y divide-border">
-                {comboDemandSupply.map((item) => {
-                  const maxDemand = comboDemandSupply[0]?.demand || 1;
-                  const maxSupply = Math.max(1, spaces.length);
-                  return (
-                    <li key={item.valueKey} className="py-2.5 text-sm">
-                      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                        <span className="break-words min-w-0">{item.valueLabel}</span>
-                        <span className="font-mono tabular-nums text-muted-foreground whitespace-nowrap">
-                          {item.demand.toLocaleString("sv-SE")} sökningar · {item.supply} lokal{item.supply === 1 ? "" : "er"}
-                        </span>
-                      </div>
-                      <div className="mt-1.5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                        <div>
-                          <span className="text-muted-foreground">Efterfrågan</span>
-                          <div className="h-2 rounded bg-muted overflow-hidden mt-0.5">
-                            <div
-                              className="h-full bg-primary"
-                              style={{ width: `${Math.min(100, (item.demand / maxDemand) * 100)}%` }}
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground">Utbud (av {spaces.length} lokaler)</span>
-                          <div className="h-2 rounded bg-muted overflow-hidden mt-0.5">
-                            <div
-                              className="h-full bg-emerald-500"
-                              style={{ width: `${Math.min(100, (item.supply / maxSupply) * 100)}%` }}
-                            />
-                          </div>
-                        </div>
-                      </div>
-                      <div className="mt-0.5 text-xs text-muted-foreground">
-                        {item.supply === 0
-                          ? "Ingen lokal matchar hela kombinationen"
-                          : item.supply <= 2
-                            ? `Endast ${item.supply} lokal${item.supply === 1 ? "" : "er"} matchar – smalt utbud`
-                            : `${item.supply} av ${spaces.length} lokaler matchar kombinationen`}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-
-          </Section>
-
-          <Section
             title="Sökningar utan träff – närmaste alternativ"
             help="Vanliga filterkombinationer som gav noll träffar, med förslag på vilket enskilt filter du kan ta bort för att flest lokaler ska visas."
           >
@@ -1388,6 +1336,58 @@ export function AnalyticsTab({
               max={heatmapMode === "avg" ? heatmap.maxAvg : heatmap.max}
               decimals={heatmapMode === "avg" ? 1 : 0}
             />
+          </Section>
+
+          <Section
+            title="Efterfrågan vs utbud per filterkombination"
+            help="De vanligaste kombinationerna av minst två filter, jämfört med hur många lokaler som faktiskt matchar hela kombinationen. Få matchande lokaler på en efterfrågad kombination visar var utbudet inte räcker till."
+          >
+            {comboDemandSupply.length === 0 ? <Empty /> : (
+              <ul className="divide-y divide-border">
+                {comboDemandSupply.map((item) => {
+                  const maxDemand = comboDemandSupply[0]?.demand || 1;
+                  const maxSupply = Math.max(1, spaces.length);
+                  return (
+                    <li key={item.valueKey} className="py-2.5 text-sm">
+                      <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
+                        <span className="break-words min-w-0">{item.valueLabel}</span>
+                        <span className="font-mono tabular-nums text-muted-foreground whitespace-nowrap">
+                          {item.demand.toLocaleString("sv-SE")} sökningar · {item.supply} lokal{item.supply === 1 ? "" : "er"}
+                        </span>
+                      </div>
+                      <div className="mt-1.5 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-muted-foreground">Efterfrågan</span>
+                          <div className="h-2 rounded bg-muted overflow-hidden mt-0.5">
+                            <div
+                              className="h-full bg-primary"
+                              style={{ width: `${Math.min(100, (item.demand / maxDemand) * 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground">Utbud (av {spaces.length} lokaler)</span>
+                          <div className="h-2 rounded bg-muted overflow-hidden mt-0.5">
+                            <div
+                              className="h-full bg-emerald-500"
+                              style={{ width: `${Math.min(100, (item.supply / maxSupply) * 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="mt-0.5 text-xs text-muted-foreground">
+                        {item.supply === 0
+                          ? "Ingen lokal matchar hela kombinationen"
+                          : item.supply <= 2
+                            ? `Endast ${item.supply} lokal${item.supply === 1 ? "" : "er"} matchar – smalt utbud`
+                            : `${item.supply} av ${spaces.length} lokaler matchar kombinationen`}
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+
           </Section>
         </>
 
