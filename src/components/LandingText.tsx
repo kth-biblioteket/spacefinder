@@ -1,5 +1,6 @@
 import { useUiText } from "@/lib/useUiText";
 import { sanitizeHtml, DESCRIPTION_SANITIZE_OPTIONS } from "@/lib/sanitizeHtml";
+import { useKiosk, useKioskIntroLinks, stripLinks } from "@/lib/useKiosk";
 
 const LINK_OPTIONS = {
   ...DESCRIPTION_SANITIZE_OPTIONS,
