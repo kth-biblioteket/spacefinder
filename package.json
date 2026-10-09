@@ -105,6 +105,6 @@
     "vitest": "^4.1.10"
   },
   "overrides": {
-    "seroval": "^1.6.9"
+    "seroval": "1.6.9"
   }
 }
