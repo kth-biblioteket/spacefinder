@@ -54,7 +54,7 @@ export function LandingText({ compact = false }: LandingTextProps) {
             <p
               key={i}
               className="text-lg sm:text-xl leading-snug text-foreground"
-              dangerouslySetInnerHTML={{ __html: sanitizeHtml(p, LINK_OPTIONS) }}
+              dangerouslySetInnerHTML={{ __html: render(p) }}
             />
           ))}
         </div>
@@ -65,7 +65,7 @@ export function LandingText({ compact = false }: LandingTextProps) {
             <p
               key={i}
               className="text-sm sm:text-base leading-relaxed text-foreground"
-              dangerouslySetInnerHTML={{ __html: sanitizeHtml(p, LINK_OPTIONS) }}
+              dangerouslySetInnerHTML={{ __html: render(p) }}
             />
           ))}
         </div>
