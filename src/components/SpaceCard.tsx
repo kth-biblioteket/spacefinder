@@ -49,6 +49,7 @@ import { type Filters } from "./FilterPanel";
 import { parseSpaceLinks } from "@/lib/spaceLinks";
 import { useRovingTabIndex } from "@/hooks/useRovingTabIndex";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useKiosk } from "@/lib/useKiosk";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -88,7 +89,9 @@ export function SpaceCard({
 }) {
   const { t, i18n } = useTranslation();
   const lang = (i18n.resolvedLanguage ?? "sv") as Lang;
-  const isMobile = useIsMobile();
+  const isMobileViewport = useIsMobile();
+  const kiosk = useKiosk();
+  const isMobile = isMobileViewport || kiosk;
   const [aboutOpen, setAboutOpen] = useState(false);
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [lightboxIndex, setLightboxIndex] = useState(0);
@@ -885,7 +888,7 @@ export function SpaceCard({
                   }
             }
           />
-          {interactive && (
+          {interactive && !kiosk && (
             <button
               type="button"
               onClick={(event) => {

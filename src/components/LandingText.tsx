@@ -1,5 +1,6 @@
 import { useUiText } from "@/lib/useUiText";
 import { sanitizeHtml, DESCRIPTION_SANITIZE_OPTIONS } from "@/lib/sanitizeHtml";
+import { useKiosk, useKioskIntroLinks, stripLinks } from "@/lib/useKiosk";
 
 const LINK_OPTIONS = {
   ...DESCRIPTION_SANITIZE_OPTIONS,
@@ -22,6 +23,13 @@ type LandingTextProps = {
 export function LandingText({ compact = false }: LandingTextProps) {
   const { data: intro } = useUiText("landing_intro");
   const { data: body } = useUiText("landing_body");
+  const kiosk = useKiosk();
+  const { data: kioskLinks = false } = useKioskIntroLinks();
+  const render = (p: string) => {
+    const html = sanitizeHtml(p, LINK_OPTIONS);
+    return kiosk && !kioskLinks ? stripLinks(html) : html;
+  };
+
 
 
   const introParts = paragraphs(intro ?? "");

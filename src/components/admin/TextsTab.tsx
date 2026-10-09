@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { useAnnouncementAdmin, useSaveAnnouncement } from "@/lib/useAnnouncement";
 import { useBetaBadgeEnabled, useSaveBetaBadge } from "@/lib/useBetaBadge";
+import { useKioskIntroLinks, useSaveKioskIntroLinks } from "@/lib/useKiosk";
 import {
   UI_TEXT_DEFAULTS,
   UI_TEXT_DEFAULTS_EN,
@@ -19,6 +20,7 @@ export function LandingMessageTab() {
     <div className="space-y-6 max-w-4xl">
       <AnnouncementSection />
       <BetaBadgeSection />
+      <KioskLinksSection />
       <UiTextGroupCard
         title="Startsida"
         description="Synliga texter överst på startsidan. De påverkar inte sidans HTML-metadata eller länkförhandsvisningar."
@@ -29,6 +31,38 @@ export function LandingMessageTab() {
         description="Texter som visas när inga lokaler matchar de valda filtren."
         keys={["empty_title", "empty_suggest_template", "empty_fallback"]}
       />
+    </div>
+  );
+}
+
+export function KioskLinksSection() {
+  const { data: enabled = false, isLoading } = useKioskIntroLinks();
+  const save = useSaveKioskIntroLinks();
+  return (
+    <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          <h2 className="text-lg font-bold">Visa länkar i ingressen i kioskläge</h2>
+          <p className="text-sm text-muted-foreground mt-1">
+            Gäller bara kioskdatorn (adress med <code>?kiosk=1</code>). När inställningen är av visas
+            länktexten som vanlig text så att man inte kan lämna tjänsten. Desktop och mobil påverkas inte.
+          </p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <span className="text-sm font-medium">{enabled ? "På" : "Av"}</span>
+          <Switch
+            checked={enabled}
+            disabled={isLoading || save.isPending}
+            onCheckedChange={(value) =>
+              save.mutate(value, {
+                onSuccess: () => toast.success(value ? "Länkar visas i kioskläge" : "Länkar dolda i kioskläge"),
+                onError: () => toast.error("Kunde inte spara inställningen."),
+              })
+            }
+            aria-label="Visa länkar i ingressen i kioskläge"
+          />
+        </div>
+      </div>
     </div>
   );
 }

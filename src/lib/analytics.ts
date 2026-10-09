@@ -1,3 +1,4 @@
+import { isKioskMode } from "@/lib/useKiosk";
 import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -31,8 +32,9 @@ export type AnalyticsEvent =
   | "share_click"
   | "share_open";
 
-function detectDevice(): "mobile" | "tablet" | "desktop" {
+function detectDevice(): "mobile" | "tablet" | "desktop" | "kiosk" {
   if (typeof window === "undefined") return "desktop";
+  if (isKioskMode()) return "kiosk";
   const ua = navigator.userAgent || "";
   const w = window.innerWidth;
   if (/iPad|Tablet|PlayBook|Silk/i.test(ua) || (w >= 768 && w < 1024 && /Mobi|Android/i.test(ua))) return "tablet";

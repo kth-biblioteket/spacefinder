@@ -450,7 +450,7 @@ export function AnalyticsTab({
       counts[d] = (counts[d] ?? 0) + 1;
     }
     const total = Object.values(counts).reduce((a, b) => a + b, 0);
-    const labels: Record<string, string> = { mobile: "Mobil", desktop: "Desktop", tablet: "Surfplatta", okänd: "Okänd" };
+    const labels: Record<string, string> = { mobile: "Mobil", desktop: "Desktop", tablet: "Surfplatta", kiosk: "Kiosk", okänd: "Okänd" };
     return Object.entries(counts)
       .map(([k, v]) => ({ key: k, label: labels[k] ?? k, count: v, pct: total ? v / total : 0 }))
       .sort((a, b) => b.count - a.count);
