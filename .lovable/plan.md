@@ -1,42 +1,38 @@
 # Kioskläge för touchskärm i biblioteket
 
-Tjänsten fungerar i stort redan på en touchskärm, men några saker behöver anpassas för att den ska kännas bra och inte samla in missvisande statistik.
+Kioskläget slås på med en särskild adress (t.ex. `spacefinder.lib.kth.se/?kiosk=1`) som kioskdatorn öppnar. Vanliga besökare på desktop och mobil använder samma adress utan tillägget och ser allt som idag. Det är så vi kan dölja saker bara på kiosken.
 
-## Vad som redan fungerar
+Kioskdatorn sköter själv återställningen när ingen använder den, så det bygger vi inte.
 
-- Touchytor, responsiv layout och live-status (beläggning, grupprum) som uppdateras varje minut.
-- Öppettiderna styr live-visningen på timer, så en kiosk som står på dygnet runt följer schemat.
+## 1. Kioskläge som inte påverkar statistiken
+- Statistiken märks med enheten "kiosk", så kiosktrafiken syns för sig i statistikfliken och inte blandas ihop med mobil/desktop.
+- Kioskläget följer med när man byter språk, så det inte stängs av av misstag.
 
-## Anpassningar som behövs
+## 2. Anpassningar för touch
+- Ingen bildförstoring (lightbox) när man trycker på bilderna, som på mobil idag.
+- Ingen delningsknapp på lokalkorten.
+- Rullning och filterpanelen ska fungera bara med pekning. Testa det på den riktiga skärmen.
 
-### 1. Automatisk återställning vid inaktivitet
-En besökare lämnar ofta kiosken med filter och utfällda kort kvar. Nästa besökare ska möta en ren startsida.
-- Efter t.ex. 60–90 sekunder utan beröring: nollställ filter, stäng utfällda kort och dialoger, scrolla till toppen.
-- Tiden bör vara inställningsbar i admin (eller åtminstone enkel att ändra).
+## 3. Förenklad sidhuvud utan väg ut
+- Det blå bandet med KTH-loggan tas bort.
+- Menyknappen uppe till höger tas bort, så att man inte kan surfa vidare.
+- Språkvalet svenska/engelska finns kvar på vit bakgrund, med ikon och språktext i marinblått.
 
-### 2. Kioskläge som inte smutsar ner statistiken
-Idag räknas varje kiosk som en desktop-session som lever hela dagen, och kioskbesök blandas med vanliga besök.
-- En URL-parameter (t.ex. `?kiosk=1`) som:
-  - aktiverar återställningen ovan,
-  - taggar statistikhändelser med "kiosk" som enhet, så ni kan se kiosktrafik separat i statistikfliken (och den inte förvrider mobil/desktop-fördelningen).
+## 4. Länkar i ingresstexten
+Länkar i ingressen under rubriken (och i brödtexten under) kan leda bort från tjänsten. I admin finns ett nytt val bland texterna: **"Visa länkar i ingressen i kioskläge"** (av som standard).
+- Av: på kiosken visas länktexten som vanlig text, så den inte går att klicka. Meningen blir alltså kvar i sin helhet.
+- På: länkarna fungerar som vanligt även på kiosken.
+- Desktop och mobil påverkas inte. Där fungerar länkarna alltid som idag.
 
-### 3. Touchanpassning i detaljerna
-- Stäng av lightbox/bildförstoring (redan avstängd på mobil – samma bör gälla kiosk).
-- Dölj delningsknappen i kioskläge (meningslös på en fast skärm, och "kopiera länk" fungerar dåligt utan tangentbord).
-- Säkerställ att rullning och filterpanelen fungerar med pekning utan hover – det mesta gör det redan, men det bör testas på riktig hårdvara.
-
-### 4. Driftsfrågor utanför appen (er IT/hårdvara)
-Dessa kan vi inte lösa i koden men bör tänkas igenom:
-- Webbläsaren bör köras i kiosk-/fullskärmsläge utan adressfält och navigeringsknappar (t.ex. Chrome `--kiosk`).
-- Blockera navigering bort från tjänsten (vitlista domänen), så besökare inte kan surfa vidare.
-- Skärmsläckare/strömsparläge och nattlig omstart av webbläsaren.
-- Pinch-zoom bör stängas av i webbläsaren så layouten inte kan "fastna" inzoomad.
+## 5. Inställningar i kioskdatorn (IT)
+- Webbläsaren i fullskärm utan adressfält (t.ex. Chrome `--kiosk`) och med startadressen ovan.
+- Bara spacefinder-domänen ska vara tillåten. Det skyddar också mot länkar i lokalkortens beskrivningar och knappar som "Boka".
+- Pinch-zoom avstängd, inget strömsparläge, inaktivitetsåterställning i kioskprogramvaran.
 
 ## Teknisk not
+- Kioskflaggan läses från URL:en (`kiosk=1`) i en delad hook. Den används i `SiteHeader`, `LandingText`, `SpaceCard` och `analytics.ts`. Ingen ny route och ingen ändring i databasstrukturen.
+- Inställningen för länkar sparas som en ny rad i `app_settings` (`kiosk_show_intro_links`) och styrs från `TextsTab`.
+- I `LandingText` görs `<a>` om till `<span>` efter sanering när kiosken är på och inställningen är av.
 
-Berör främst `src/routes/index.tsx` (kioskparameter, inaktivitetstimer, återställning) och `src/lib/analytics.ts` (enhetstag "kiosk"). Inga databasändringar, inga nya routes. Delningsknappens döljande sker i `SpaceCard.tsx` via samma kioskflagga.
-
-## Öppna frågor
-
-- Ska kiosken visa tjänsten på svenska, engelska eller med språkvalet kvar?
-- Hur lång inaktivitetstid känns rimlig – 60, 90 eller 120 sekunder?
+## Öppen fråga
+- Ska länkar och boknings-/schemaknappar i själva lokalkorten också vara klickbara på kiosken, eller ska bara kioskdatorns domänspärr hantera dem?
