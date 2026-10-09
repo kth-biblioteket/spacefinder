@@ -22,6 +22,13 @@ type LandingTextProps = {
 export function LandingText({ compact = false }: LandingTextProps) {
   const { data: intro } = useUiText("landing_intro");
   const { data: body } = useUiText("landing_body");
+  const kiosk = useKiosk();
+  const { data: kioskLinks = false } = useKioskIntroLinks();
+  const render = (p: string) => {
+    const html = sanitizeHtml(p, LINK_OPTIONS);
+    return kiosk && !kioskLinks ? stripLinks(html) : html;
+  };
+
 
 
   const introParts = paragraphs(intro ?? "");

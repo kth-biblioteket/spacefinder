@@ -12,7 +12,7 @@ export function LanguageSwitcher({
   tone = "default",
 }: {
   className?: string;
-  tone?: "default" | "light";
+  tone?: "default" | "light" | "navy";
 }) {
   const { i18n, t } = useTranslation();
   const current = (i18n.resolvedLanguage ?? "sv") as Lang;
@@ -38,6 +38,8 @@ export function LanguageSwitcher({
         "inline-flex items-center gap-1.5 text-sm font-medium transition-colors " +
         (tone === "light"
           ? "text-white hover:opacity-80 focus-visible:ring-white "
+          : tone === "navy"
+          ? "text-[var(--kth-navy)] text-base hover:opacity-80 focus-visible:ring-[var(--kth-navy)] "
           : "text-muted-foreground hover:text-foreground focus-visible:ring-primary ") +
         "focus-visible:outline-none focus-visible:ring-2 rounded-md px-1 py-0.5 " +
         className
