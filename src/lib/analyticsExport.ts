@@ -1,6 +1,9 @@
 import * as XLSX from "xlsx";
 import { analyticsCategoryLabel, analyticsValueLabel } from "./analyticsLabels";
 import type { FilterCategoryRow, FilterOption } from "./spaces";
+import type { summarizeImageAnalytics } from "./imageAnalytics";
+
+type ImageAnalyticsSummary = ReturnType<typeof summarizeImageAnalytics>;
 
 type Row = {
   id: number;
@@ -55,6 +58,7 @@ export function exportAnalyticsToExcel(
     trend: TrendData;
     categories: FilterCategoryRow[];
     filterOptions: FilterOption[];
+    imageAnalytics: ImageAnalyticsSummary;
   },
 ): void {
 
@@ -84,6 +88,8 @@ export function exportAnalyticsToExcel(
     ["Länkklick till lokalsida", byType.space_link_click ?? 0],
     ["Delningar", byType.share_click ?? 0],
     ["Öppnade delade länkar", byType.share_open ?? 0],
+    ["Bildbläddringar", byType.image_change ?? 0],
+    ["Stor bildvisare öppnad", byType.image_viewer_open ?? 0],
     ["Filterändringar", byType.filter_change ?? 0],
     ["Sök utan träff", byType.empty_results ?? 0],
     ["Totalt händelser", rows.length],
@@ -254,6 +260,30 @@ export function exportAnalyticsToExcel(
     srcRows.push([d, c]);
   }
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(srcRows), "Källor");
+
+  if (extra?.imageAnalytics) {
+    const imageRows: (string | number)[][] = [[
+      "Lokal",
+      "Bildbläddringar",
+      "Unika sessioner",
+      "Stor bildvisare öppnad",
+      "Vanliga besök",
+      "Kiosk",
+      "Bildpositioner",
+    ]];
+    for (const space of extra.imageAnalytics.spaces) {
+      imageRows.push([
+        space.name,
+        space.changes,
+        space.sessions,
+        space.opens,
+        space.web,
+        space.kiosk,
+        space.positions.map((item) => `Bild ${item.position}: ${item.count}`).join(" · "),
+      ]);
+    }
+    XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(imageRows), "Bildengagemang");
+  }
 
 
   // Råhändelser
