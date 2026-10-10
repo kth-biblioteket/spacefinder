@@ -10,12 +10,14 @@ export function ImageLightbox({
   initialIndex = 0,
   open,
   onClose,
+  onImageChange,
 }: {
   images: string[];
   alts?: string[];
   initialIndex?: number;
   open: boolean;
   onClose: () => void;
+  onImageChange?: (index: number) => void;
 }) {
   const { t } = useTranslation();
   const [idx, setIdx] = useState(initialIndex);
@@ -61,9 +63,13 @@ export function ImageLightbox({
 
   const go = useCallback(
     (delta: number) => {
-      setIdx((i) => (i + delta + count) % count);
+      setIdx((i) => {
+        const next = (i + delta + count) % count;
+        onImageChange?.(next);
+        return next;
+      });
     },
-    [count]
+    [count, onImageChange]
   );
 
   useEffect(() => {
@@ -185,7 +191,10 @@ export function ImageLightbox({
                 type="button"
                 onClick={(e) => {
                   e.stopPropagation();
-                  setIdx(i);
+                  if (i !== idx) {
+                    setIdx(i);
+                    onImageChange?.(i);
+                  }
                 }}
                 aria-label={t("gallery.go_to", { n: i + 1 })}
                 aria-current={i === idx ? "true" : undefined}
