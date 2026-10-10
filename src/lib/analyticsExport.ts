@@ -2,6 +2,7 @@ import * as XLSX from "xlsx";
 import { analyticsCategoryLabel, analyticsValueLabel } from "./analyticsLabels";
 import type { FilterCategoryRow, FilterOption } from "./spaces";
 import type { summarizeImageAnalytics } from "./imageAnalytics";
+import { summarizePageViewField } from "./visitorAnalytics";
 
 type ImageAnalyticsSummary = ReturnType<typeof summarizeImageAnalytics>;
 
@@ -260,6 +261,16 @@ export function exportAnalyticsToExcel(
     srcRows.push([d, c]);
   }
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(srcRows), "Källor");
+
+  const visitorRows: (string | number)[][] = [["Webbläsare", "Sidvisningar", "Andel"]];
+  for (const item of summarizePageViewField(rows, "browser")) {
+    visitorRows.push([item.label, item.count, `${(item.pct * 100).toFixed(1)}%`]);
+  }
+  visitorRows.push([], ["Land", "Sidvisningar", "Andel"]);
+  for (const item of summarizePageViewField(rows, "country")) {
+    visitorRows.push([item.label, item.count, `${(item.pct * 100).toFixed(1)}%`]);
+  }
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(visitorRows), "Webbläsare och länder");
 
   if (extra?.imageAnalytics) {
     const imageRows: (string | number)[][] = [[

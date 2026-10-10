@@ -27,6 +27,7 @@ import { emptyFilters, type Filters } from "@/components/FilterPanel";
 import type { FilterCategoryRow, FilterOption, Space } from "@/lib/spaces";
 import { analyticsCategoryLabel, analyticsValueLabel } from "@/lib/analyticsLabels";
 import { summarizeImageAnalytics } from "@/lib/imageAnalytics";
+import { summarizePageViewField } from "@/lib/visitorAnalytics";
 
 
 
@@ -458,6 +459,9 @@ export function AnalyticsTab({
       .map(([k, v]) => ({ key: k, label: labels[k] ?? k, count: v, pct: total ? v / total : 0 }))
       .sort((a, b) => b.count - a.count);
   }, [rows]);
+
+  const browserBreakdown = useMemo(() => summarizePageViewField(rows, "browser"), [rows]);
+  const countryBreakdown = useMemo(() => summarizePageViewField(rows, "country"), [rows]);
 
   const sourceBreakdown = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -958,6 +962,19 @@ export function AnalyticsTab({
                 </ol>
               )}
             </Section>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <BreakdownSection
+              title="Webbläsare (sidvisningar)"
+              help="Vilka webbläsare som användes vid sidvisningarna. Äldre besök från före denna mätning visas som Okänd."
+              items={browserBreakdown}
+            />
+            <BreakdownSection
+              title="Länder (sidvisningar)"
+              help="Besökarens land på landsnivå. Ingen IP-adress eller exakt position sparas. Äldre besök visas som Okänt land."
+              items={countryBreakdown}
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -1572,6 +1589,38 @@ function Section({ title, children, help }: { title: string; children: React.Rea
 
 function Empty() {
   return <p className="text-sm text-muted-foreground">Ingen data ännu.</p>;
+}
+
+function BreakdownSection({
+  title,
+  help,
+  items,
+}: {
+  title: string;
+  help: string;
+  items: Array<{ key: string; label: string; count: number; pct: number }>;
+}) {
+  return (
+    <Section title={title} help={help}>
+      {items.length === 0 ? <Empty /> : (
+        <ul className="space-y-2">
+          {items.map((item) => (
+            <li key={item.key} className="text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="min-w-0 break-words">{item.label}</span>
+                <span className="shrink-0 font-mono tabular-nums text-muted-foreground">
+                  {item.count.toLocaleString("sv-SE")} · {(item.pct * 100).toFixed(0)}%
+                </span>
+              </div>
+              <div className="mt-1 h-2 overflow-hidden rounded bg-muted">
+                <div className="h-full bg-primary" style={{ width: `${item.pct * 100}%` }} />
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Section>
+  );
 }
 
 function Heatmap({ grid, max, decimals = 0 }: { grid: number[][]; max: number; decimals?: number }) {
