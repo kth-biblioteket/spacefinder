@@ -2,11 +2,14 @@ import { queryOptions, useQuery, useMutation, useQueryClient } from "@tanstack/r
 import { useTranslation } from "react-i18next";
 import { supabase } from "@/integrations/supabase/client";
 import type { Lang } from "@/i18n";
+import { resolveLandingLink, safeLandingLinkUrl } from "@/lib/landingLink";
 
 export const UI_TEXT_KEYS = [
   "landing_title",
   "landing_intro",
   "landing_body",
+  "landing_link_label",
+  "landing_link_url",
   "empty_title",
   "empty_suggest_template",
   "empty_fallback",
@@ -18,6 +21,8 @@ export const UI_TEXT_DEFAULTS: Record<UiTextKey, string> = {
   landing_title: "KTH Bibliotekets studieplatsväljare",
   landing_intro: "",
   landing_body: "",
+  landing_link_label: "",
+  landing_link_url: "",
   empty_title: "Inga lokaler matchar dina filter.",
   empty_suggest_template:
     "Filtret {label} verkar smalast — om du tar bort det hittar vi {count} {lokal}.",
@@ -28,6 +33,8 @@ export const UI_TEXT_DEFAULTS_EN: Record<UiTextKey, string> = {
   landing_title: "KTH Library Spacefinder",
   landing_intro: "",
   landing_body: "",
+  landing_link_label: "",
+  landing_link_url: "",
   empty_title: "No spaces match your filters.",
   empty_suggest_template:
     "The filter {label} seems narrowest — if you remove it we find {count} {lokal}.",
@@ -47,13 +54,13 @@ export const UI_TEXT_META: Record<
   landing_intro: {
     title: "Ingress på startsidan",
     description:
-      'Större introduktionstext direkt under rubriken. Lämna tomt för att dölja. Du kan använda länkar: <a href="https://...">länktext</a>.',
+      'Större introduktionstext direkt under rubriken. Lämna tomt för att dölja. Lägg länkar i det separata länkfältet nedan, inte inuti texten.',
     rows: 4,
   },
   landing_body: {
     title: "Brödtext på startsidan",
     description:
-      'Mindre text i en grå ruta under ingressen. Lämna en tom rad mellan stycken. Lämna tomt för att dölja. Du kan använda länkar: <a href="https://...">länktext</a>.',
+      'Mindre text under ingressen. Lämna en tom rad mellan stycken. Lämna tomt för att dölja. Lägg länkar i det separata länkfältet nedan, inte inuti texten.',
     rows: 8,
   },
   empty_title: {
@@ -61,6 +68,8 @@ export const UI_TEXT_META: Record<
     description: "Visas överst när inga lokaler matchar de valda filtren.",
     rows: 2,
   },
+  landing_link_label: { title: "Länktext under ingressen", description: "Beskriv vart länken leder.", rows: 1 },
+  landing_link_url: { title: "Länkadress under ingressen", description: "Fullständig webbadress med https://.", rows: 1 },
   empty_suggest_template: {
     title: "Tomt resultat – förslag",
     description:
@@ -90,6 +99,7 @@ export type UiSettings = Record<string, string>;
 const UI_SETTING_KEYS = [
   ...UI_TEXT_KEYS.flatMap((key) => [settingKey(key, "sv"), settingKey(key, "en")]),
   BETA_BADGE_SETTING_KEY,
+  "kiosk_show_intro_links",
 ];
 
 async function fetchUiSettings(): Promise<UiSettings> {
@@ -141,6 +151,27 @@ export function useSaveUiText() {
         .upsert({ key: settingKey(key, lang), value });
       if (error) throw error;
       return key;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: UI_SETTINGS_QUERY_KEY }),
+  });
+}
+
+export function useLandingLink(lang: Lang, kiosk: boolean) {
+  return useQuery({ ...uiSettingsQueryOptions, select: (settings) => resolveLandingLink(settings, lang, kiosk) });
+}
+
+export function useSaveLandingLink() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ label, url, lang }: { label: string; url: string; lang: Lang }) => {
+      if (Boolean(label.trim()) !== Boolean(url.trim()) || (url.trim() && !safeLandingLinkUrl(url))) {
+        throw new Error("Fyll i både länktext och en giltig webbadress med https://, eller lämna båda tomma.");
+      }
+      const { error } = await supabase.from("app_settings").upsert([
+        { key: settingKey("landing_link_label", lang), value: label.trim() },
+        { key: settingKey("landing_link_url", lang), value: url.trim() },
+      ]);
+      if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: UI_SETTINGS_QUERY_KEY }),
   });
