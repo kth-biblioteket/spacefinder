@@ -7,4 +7,4 @@
 - [x] Verify image analytics rules and interactions.
 - [x] Track browser and country on new page views without storing exact location or IP addresses.
 - [x] Show browser and country breakdowns in admin statistics and Excel export.
-- [ ] Verify browser and country analytics in desktop and mobile admin views.
+- [x] Verify browser and country analytics in desktop and mobile admin views.
