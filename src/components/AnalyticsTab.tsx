@@ -26,6 +26,7 @@ import { groupRoomLabels, isGroupRoomSpace } from "@/lib/groupRoom";
 import { emptyFilters, type Filters } from "@/components/FilterPanel";
 import type { FilterCategoryRow, FilterOption, Space } from "@/lib/spaces";
 import { analyticsCategoryLabel, analyticsValueLabel } from "@/lib/analyticsLabels";
+import { summarizeImageAnalytics } from "@/lib/imageAnalytics";
 
 
 
@@ -237,6 +238,8 @@ export function AnalyticsTab({
   };
   const totals = useMemo(() => computeTotals(rows), [rows]);
   const prevTotals = useMemo(() => computeTotals(prevRows), [prevRows]);
+
+  const imageAnalytics = useMemo(() => summarizeImageAnalytics(rows), [rows]);
 
 
   const topCards = useMemo(() => {
@@ -804,6 +807,7 @@ export function AnalyticsTab({
                 trend: trendData,
                 categories,
                 filterOptions,
+                imageAnalytics,
               })
             }
           >
@@ -1049,6 +1053,63 @@ export function AnalyticsTab({
                   </li>
                 ))}
               </ol>
+            )}
+          </Section>
+
+          <Section
+            title="Bildengagemang"
+            help="Aktiva bildbyten och öppningar av den stora bildvisaren under vald period. Unika sessioner gör att en person som bläddrar många gånger inte väger oproportionerligt tungt. Kiosk och vanliga besök redovisas separat."
+          >
+            {imageAnalytics.total.changes === 0 && imageAnalytics.total.opens === 0 ? <Empty /> : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  <div className="rounded-lg bg-muted/60 p-3">
+                    <div className="text-xs text-muted-foreground">Bildbläddringar</div>
+                    <div className="mt-1 text-xl font-bold tabular-nums">{imageAnalytics.total.changes.toLocaleString("sv-SE")}</div>
+                  </div>
+                  <div className="rounded-lg bg-muted/60 p-3">
+                    <div className="text-xs text-muted-foreground">Unika sessioner</div>
+                    <div className="mt-1 text-xl font-bold tabular-nums">{imageAnalytics.total.sessions.toLocaleString("sv-SE")}</div>
+                  </div>
+                  <div className="col-span-2 rounded-lg bg-muted/60 p-3 sm:col-span-1">
+                    <div className="text-xs text-muted-foreground">Stor bildvisare öppnad</div>
+                    <div className="mt-1 text-xl font-bold tabular-nums">{imageAnalytics.total.opens.toLocaleString("sv-SE")}</div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {([
+                    ["Vanliga besök", imageAnalytics.audiences.web],
+                    ["Kiosk", imageAnalytics.audiences.kiosk],
+                  ] as const).map(([label, audience]) => (
+                    <div key={label} className="rounded-lg border border-border p-3 text-sm">
+                      <div className="font-medium">{label}</div>
+                      <div className="mt-1 text-xs text-muted-foreground tabular-nums">
+                        {audience.changes} bildbläddringar · {audience.sessions} unika sessioner · {audience.opens} öppningar
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <ol className="divide-y divide-border">
+                  {imageAnalytics.spaces.slice(0, 10).map((space) => (
+                    <li key={space.id} className="py-2 text-sm">
+                      <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+                        <span className="min-w-0 break-words font-medium">{space.name}</span>
+                        <span className="font-mono tabular-nums text-muted-foreground">{space.sessions} unika sessioner</span>
+                      </div>
+                      <div className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+                        {space.changes} bildbläddringar · {space.opens} öppningar · {space.web} vanliga · {space.kiosk} kiosk
+                      </div>
+                      {space.positions.length > 0 ? (
+                        <div className="mt-0.5 text-xs text-muted-foreground">
+                          Visade bildpositioner: {space.positions.map((item) => `Bild ${item.position} (${item.count})`).join(" · ")}
+                        </div>
+                      ) : null}
+                    </li>
+                  ))}
+                </ol>
+              </div>
             )}
           </Section>
 

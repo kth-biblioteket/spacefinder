@@ -30,7 +30,9 @@ export type AnalyticsEvent =
   | "empty_results"
   | "space_link_click"
   | "share_click"
-  | "share_open";
+  | "share_open"
+  | "image_change"
+  | "image_viewer_open";
 
 function detectDevice(): "mobile" | "tablet" | "desktop" | "kiosk" {
   if (typeof window === "undefined") return "desktop";

@@ -31,6 +31,7 @@ export function ImageCarousel({
   alts = [],
   className,
   onImageClick,
+  onImageChange,
   priority = false,
 }: {
   images: string[];
@@ -38,6 +39,7 @@ export function ImageCarousel({
   alts?: string[];
   className?: string;
   onImageClick?: (index: number) => void;
+  onImageChange?: (index: number) => void;
   priority?: boolean;
 }) {
   const { t } = useTranslation();
@@ -69,7 +71,11 @@ export function ImageCarousel({
     if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) {
       e.stopPropagation();
       swipedRef.current = true;
-      setIdx((i) => (i + (dx < 0 ? 1 : -1) + count) % count);
+      setIdx((i) => {
+        const next = (i + (dx < 0 ? 1 : -1) + count) % count;
+        onImageChange?.(next);
+        return next;
+      });
     } else if (s.moved) {
       swipedRef.current = true;
     }
@@ -92,7 +98,17 @@ export function ImageCarousel({
   }
 
   const go = (delta: number) => {
-    setIdx((i) => (i + delta + count) % count);
+    setIdx((i) => {
+      const next = (i + delta + count) % count;
+      onImageChange?.(next);
+      return next;
+    });
+  };
+
+  const selectImage = (next: number) => {
+    if (next === idx) return;
+    setIdx(next);
+    onImageChange?.(next);
   };
 
   const handleKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>) => {
@@ -106,10 +122,10 @@ export function ImageCarousel({
       go(1);
     } else if (event.key === "Home") {
       event.preventDefault();
-      setIdx(0);
+      selectImage(0);
     } else if (event.key === "End") {
       event.preventDefault();
-      setIdx(count - 1);
+      selectImage(count - 1);
     }
   };
 
@@ -240,7 +256,7 @@ export function ImageCarousel({
               onMouseDown={(event) => event.preventDefault()}
               onClick={(event) => {
                 event.stopPropagation();
-                setIdx(i);
+                selectImage(i);
               }}
               className="h-6 w-6 inline-flex cursor-pointer items-center justify-center rounded-full"
             >
