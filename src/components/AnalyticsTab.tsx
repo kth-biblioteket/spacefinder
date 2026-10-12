@@ -461,7 +461,6 @@ export function AnalyticsTab({
   }, [rows]);
 
   const browserBreakdown = useMemo(() => summarizePageViewField(rows, "browser"), [rows]);
-  const countryBreakdown = useMemo(() => summarizePageViewField(rows, "country"), [rows]);
 
   const sourceBreakdown = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -964,18 +963,11 @@ export function AnalyticsTab({
             </Section>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <BreakdownSection
-              title="Webbläsare (sidvisningar)"
-              help="Vilka webbläsare som användes vid sidvisningarna. Äldre besök från före denna mätning visas som Okänd."
-              items={browserBreakdown}
-            />
-            <BreakdownSection
-              title="Länder (sidvisningar)"
-              help="Besökarens land på landsnivå. Ingen IP-adress eller exakt position sparas. Äldre besök visas som Okänt land."
-              items={countryBreakdown}
-            />
-          </div>
+          <BreakdownSection
+            title="Webbläsare (sidvisningar)"
+            help="Vilka webbläsare som användes vid sidvisningarna. Äldre besök från före denna mätning visas som Okänd."
+            items={browserBreakdown}
+          />
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Stat
