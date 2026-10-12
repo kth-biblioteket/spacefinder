@@ -1,11 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { DEFAULT_CAPACITY_ICON } from "@/lib/defaultCapacityIcon";
 
 const SETTINGS_KEY = "capacity_icon_url";
 
 export function useCapacityIcon() {
   return useQuery({
     queryKey: ["capacity-icon"],
+    placeholderData: DEFAULT_CAPACITY_ICON,
     queryFn: async (): Promise<string | null> => {
       const { data, error } = await supabase
         .from("app_settings")
@@ -13,7 +15,7 @@ export function useCapacityIcon() {
         .eq("key", SETTINGS_KEY)
         .maybeSingle();
       if (error) throw error;
-      return data?.value ?? null;
+      return data?.value || DEFAULT_CAPACITY_ICON;
     },
   });
 }
