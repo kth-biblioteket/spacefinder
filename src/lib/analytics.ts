@@ -1,7 +1,7 @@
 import { isKioskMode } from "@/lib/useKiosk";
 import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { detectBrowser, normalizeCountryCode } from "@/lib/visitorAnalytics";
+import { detectBrowser } from "@/lib/visitorAnalytics";
 
 const SESSION_KEY = "hsp_session_id";
 
@@ -70,18 +70,6 @@ function getContextPayload(event: AnalyticsEvent): Record<string, unknown> {
   return out;
 }
 
-let countryPromise: Promise<string | null> | null = null;
-
-function getVisitorCountry(): Promise<string | null> {
-  if (!countryPromise) {
-    countryPromise = fetch("/api/public/visitor-country", { credentials: "same-origin" })
-      .then((response) => response.ok ? response.json() as Promise<{ country?: unknown }> : null)
-      .then((result) => normalizeCountryCode(result?.country))
-      .catch(() => null);
-  }
-  return countryPromise;
-}
-
 export function track(
   event: AnalyticsEvent,
   payload: Record<string, unknown> = {},
@@ -91,7 +79,6 @@ export function track(
   const path = window.location.pathname;
   const send = async () => {
     const context = getContextPayload(event);
-    if (event === "page_view") context.country = await getVisitorCountry();
     const merged = { ...context, ...payload };
     const { error } = await supabase
       .from("analytics_events")
