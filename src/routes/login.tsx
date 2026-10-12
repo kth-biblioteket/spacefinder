@@ -8,6 +8,11 @@ export const Route = createFileRoute("/login")({
   head: () => ({
     meta: [
       { title: "Logga in — KTH Biblioteket" },
+      { name: "description", content: "Logga in för att administrera KTH Bibliotekets studieplatsväljare." },
+      { property: "og:title", content: "Logga in — KTH Biblioteket" },
+      { property: "og:description", content: "Logga in för att administrera KTH Bibliotekets studieplatsväljare." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),
