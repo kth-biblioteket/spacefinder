@@ -26,6 +26,8 @@ import { groupRoomLabels, isGroupRoomSpace } from "@/lib/groupRoom";
 import { emptyFilters, type Filters } from "@/components/FilterPanel";
 import type { FilterCategoryRow, FilterOption, Space } from "@/lib/spaces";
 import { analyticsCategoryLabel, analyticsValueLabel } from "@/lib/analyticsLabels";
+import { summarizeImageAnalytics } from "@/lib/imageAnalytics";
+import { summarizePageViewField } from "@/lib/visitorAnalytics";
 
 
 
@@ -237,6 +239,8 @@ export function AnalyticsTab({
   };
   const totals = useMemo(() => computeTotals(rows), [rows]);
   const prevTotals = useMemo(() => computeTotals(prevRows), [prevRows]);
+
+  const imageAnalytics = useMemo(() => summarizeImageAnalytics(rows), [rows]);
 
 
   const topCards = useMemo(() => {
@@ -455,6 +459,9 @@ export function AnalyticsTab({
       .map(([k, v]) => ({ key: k, label: labels[k] ?? k, count: v, pct: total ? v / total : 0 }))
       .sort((a, b) => b.count - a.count);
   }, [rows]);
+
+  const browserBreakdown = useMemo(() => summarizePageViewField(rows, "browser"), [rows]);
+  const countryBreakdown = useMemo(() => summarizePageViewField(rows, "country"), [rows]);
 
   const sourceBreakdown = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -804,6 +811,7 @@ export function AnalyticsTab({
                 trend: trendData,
                 categories,
                 filterOptions,
+                imageAnalytics,
               })
             }
           >
@@ -957,6 +965,19 @@ export function AnalyticsTab({
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <BreakdownSection
+              title="Webbläsare (sidvisningar)"
+              help="Vilka webbläsare som användes vid sidvisningarna. Äldre besök från före denna mätning visas som Okänd."
+              items={browserBreakdown}
+            />
+            <BreakdownSection
+              title="Länder (sidvisningar)"
+              help="Besökarens land på landsnivå. Ingen IP-adress eller exakt position sparas. Äldre besök visas som Okänt land."
+              items={countryBreakdown}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Stat
               label="Sessioner som fällde ut infotext"
               value={`${(totals.expandRate * 100).toFixed(1)}%`}
@@ -1049,6 +1070,63 @@ export function AnalyticsTab({
                   </li>
                 ))}
               </ol>
+            )}
+          </Section>
+
+          <Section
+            title="Bildengagemang"
+            help="Aktiva bildbyten och öppningar av den stora bildvisaren under vald period. Unika sessioner gör att en person som bläddrar många gånger inte väger oproportionerligt tungt. Kiosk och vanliga besök redovisas separat."
+          >
+            {imageAnalytics.total.changes === 0 && imageAnalytics.total.opens === 0 ? <Empty /> : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                  <div className="rounded-lg bg-muted/60 p-3">
+                    <div className="text-xs text-muted-foreground">Bildbläddringar</div>
+                    <div className="mt-1 text-xl font-bold tabular-nums">{imageAnalytics.total.changes.toLocaleString("sv-SE")}</div>
+                  </div>
+                  <div className="rounded-lg bg-muted/60 p-3">
+                    <div className="text-xs text-muted-foreground">Unika sessioner</div>
+                    <div className="mt-1 text-xl font-bold tabular-nums">{imageAnalytics.total.sessions.toLocaleString("sv-SE")}</div>
+                  </div>
+                  <div className="col-span-2 rounded-lg bg-muted/60 p-3 sm:col-span-1">
+                    <div className="text-xs text-muted-foreground">Stor bildvisare öppnad</div>
+                    <div className="mt-1 text-xl font-bold tabular-nums">{imageAnalytics.total.opens.toLocaleString("sv-SE")}</div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  {([
+                    ["Vanliga besök", imageAnalytics.audiences.web],
+                    ["Kiosk", imageAnalytics.audiences.kiosk],
+                  ] as const).map(([label, audience]) => (
+                    <div key={label} className="rounded-lg border border-border p-3 text-sm">
+                      <div className="font-medium">{label}</div>
+                      <div className="mt-1 text-xs text-muted-foreground tabular-nums">
+                        {audience.changes} bildbläddringar · {audience.sessions} unika sessioner · {audience.opens} öppningar
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <ol className="divide-y divide-border">
+                  {imageAnalytics.spaces.slice(0, 10).map((space) => (
+                    <li key={space.id} className="py-2 text-sm">
+                      <div className="flex flex-wrap items-baseline justify-between gap-x-3">
+                        <span className="min-w-0 break-words font-medium">{space.name}</span>
+                        <span className="font-mono tabular-nums text-muted-foreground">{space.sessions} unika sessioner</span>
+                      </div>
+                      <div className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+                        {space.changes} bildbläddringar · {space.opens} öppningar · {space.web} vanliga · {space.kiosk} kiosk
+                      </div>
+                      {space.positions.length > 0 ? (
+                        <div className="mt-0.5 text-xs text-muted-foreground">
+                          Visade bildpositioner: {space.positions.map((item) => `Bild ${item.position} (${item.count})`).join(" · ")}
+                        </div>
+                      ) : null}
+                    </li>
+                  ))}
+                </ol>
+              </div>
             )}
           </Section>
 
@@ -1511,6 +1589,38 @@ function Section({ title, children, help }: { title: string; children: React.Rea
 
 function Empty() {
   return <p className="text-sm text-muted-foreground">Ingen data ännu.</p>;
+}
+
+function BreakdownSection({
+  title,
+  help,
+  items,
+}: {
+  title: string;
+  help: string;
+  items: Array<{ key: string; label: string; count: number; pct: number }>;
+}) {
+  return (
+    <Section title={title} help={help}>
+      {items.length === 0 ? <Empty /> : (
+        <ul className="space-y-2">
+          {items.map((item) => (
+            <li key={item.key} className="text-sm">
+              <div className="flex items-center justify-between gap-3">
+                <span className="min-w-0 break-words">{item.label}</span>
+                <span className="shrink-0 font-mono tabular-nums text-muted-foreground">
+                  {item.count.toLocaleString("sv-SE")} · {(item.pct * 100).toFixed(0)}%
+                </span>
+              </div>
+              <div className="mt-1 h-2 overflow-hidden rounded bg-muted">
+                <div className="h-full bg-primary" style={{ width: `${item.pct * 100}%` }} />
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </Section>
+  );
 }
 
 function Heatmap({ grid, max, decimals = 0 }: { grid: number[][]; max: number; decimals?: number }) {

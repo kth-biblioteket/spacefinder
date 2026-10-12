@@ -879,12 +879,14 @@ export function SpaceCard({
             alts={localizedAlts}
             alt={localizedName}
             priority={priority}
+            onImageChange={(index) => analytics.trackImageChange(index, "card", kiosk)}
             onImageClick={
               isMobile
                 ? undefined
                 : (index) => {
                     setLightboxIndex(index);
                     setLightboxOpen(true);
+                    analytics.trackImageViewerOpen(index);
                   }
             }
           />
@@ -941,6 +943,7 @@ export function SpaceCard({
           initialIndex={lightboxIndex}
           open={lightboxOpen}
           onClose={() => setLightboxOpen(false)}
+          onImageChange={(index) => analytics.trackImageChange(index, "viewer", false)}
         />
       )}
 

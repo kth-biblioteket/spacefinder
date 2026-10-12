@@ -14,6 +14,7 @@ import {
 } from "@/lib/useUiText";
 import { cn } from "@/lib/utils";
 import { LangPairEditor } from "./shared";
+import { LandingLinkEditor } from "./LandingLinkEditor";
 
 export function LandingMessageTab() {
   return (
@@ -121,6 +122,7 @@ export function UiTextGroupCard({
           <UiTextEditor uiKey={k} compact />
         </div>
       ))}
+      {keys.includes("landing_intro") && <div className="pt-6 border-t border-border"><LandingLinkEditor /></div>}
     </div>
   );
 }

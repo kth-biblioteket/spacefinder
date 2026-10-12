@@ -1,4 +1,7 @@
-import { useUiText } from "@/lib/useUiText";
+import { useLandingLink, useUiText } from "@/lib/useUiText";
+import { useTranslation } from "react-i18next";
+import { Button } from "@/components/ui/button";
+import type { Lang } from "@/i18n";
 import { sanitizeHtml, DESCRIPTION_SANITIZE_OPTIONS } from "@/lib/sanitizeHtml";
 import { useKiosk, useKioskIntroLinks, stripLinks } from "@/lib/useKiosk";
 
@@ -24,6 +27,9 @@ export function LandingText({ compact = false }: LandingTextProps) {
   const { data: intro } = useUiText("landing_intro");
   const { data: body } = useUiText("landing_body");
   const kiosk = useKiosk();
+  const { i18n } = useTranslation();
+  const lang: Lang = i18n.resolvedLanguage === "en" ? "en" : "sv";
+  const { data: link } = useLandingLink(lang, kiosk);
   const { data: kioskLinks = false } = useKioskIntroLinks();
   const render = (p: string) => {
     const html = sanitizeHtml(p, LINK_OPTIONS);
@@ -37,7 +43,7 @@ export function LandingText({ compact = false }: LandingTextProps) {
   const hasIntro = introParts.length > 0;
   const hasBody = bodyParts.length > 0;
 
-  if (!hasIntro && !hasBody) return null;
+  if (!hasIntro && !hasBody && !link) return null;
 
   return (
     <div
@@ -68,6 +74,13 @@ export function LandingText({ compact = false }: LandingTextProps) {
               dangerouslySetInnerHTML={{ __html: render(p) }}
             />
           ))}
+        </div>
+      )}
+      {link && (
+        <div className="max-w-4xl">
+          <Button asChild variant="link" className="h-auto min-h-11 max-w-full justify-start whitespace-normal px-0 text-base text-kth-blue underline break-words">
+            <a href={link.href}>{link.label}</a>
+          </Button>
         </div>
       )}
     </div>
