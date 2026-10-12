@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Menu, X } from "lucide-react";
+import { useRouterState } from "@tanstack/react-router";
 import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { NAV_LINK_KEYS, useNavLinks } from "@/lib/useNavLinks";
 const KTH_LOGO_SRC = "/kth-logo-white.svg";
 import type { Lang } from "@/i18n";
-import { useKiosk } from "@/lib/useKiosk";
+import { kioskModeFromParam, useKiosk } from "@/lib/useKiosk";
 
 const KTH_LOGO_FALLBACK = "https://app.kth.se/style/assets/kth-logotype-white.png";
 
@@ -14,9 +15,16 @@ export function SiteHeader() {
   const lang = (i18n.resolvedLanguage ?? "sv") as Lang;
   const { data: links } = useNavLinks(lang);
   const [menuOpen, setMenuOpen] = useState(false);
-  const kiosk = useKiosk();
+  // The URL is available during SSR, before browser effects or storage reads.
+  const searchStr = useRouterState({ select: (state) => state.location.searchStr });
+  const urlKiosk = kioskModeFromParam(new URLSearchParams(searchStr).get("kiosk"));
+  const sessionKiosk = useKiosk();
+  const kiosk = urlKiosk ?? sessionKiosk;
+  const [sessionResolved, setSessionResolved] = useState(false);
   const headerRef = useRef<HTMLElement>(null);
   const menuButtonRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => setSessionResolved(true), []);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -44,9 +52,13 @@ export function SiteHeader() {
     };
   }, [menuOpen]);
 
+  // With no explicit URL flag, wait for the remembered browser session rather
+  // than briefly showing navigation on a returning kiosk visit.
+  if (urlKiosk === undefined && !sessionResolved) return null;
+
   if (kiosk) {
     return (
-      <header className="relative z-40 bg-white">
+      <header className="relative z-40 bg-background">
         <div className="mx-auto flex h-14 max-w-7xl items-center justify-end px-4 sm:px-6">
           <LanguageSwitcher tone="navy" />
         </div>

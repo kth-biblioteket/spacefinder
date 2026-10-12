@@ -33,6 +33,11 @@ export const Route = createFileRoute("/admin")({
   head: () => ({
     meta: [
       { title: "Admin — KTH Biblioteket" },
+      { name: "description", content: "Administrera lokaler, filter och statistik i KTH Bibliotekets studieplatsväljare." },
+      { property: "og:title", content: "Admin — KTH Biblioteket" },
+      { property: "og:description", content: "Administrera lokaler, filter och statistik i KTH Bibliotekets studieplatsväljare." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
       { name: "robots", content: "noindex, nofollow" },
     ],
   }),

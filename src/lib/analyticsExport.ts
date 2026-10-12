@@ -266,11 +266,7 @@ export function exportAnalyticsToExcel(
   for (const item of summarizePageViewField(rows, "browser")) {
     visitorRows.push([item.label, item.count, `${(item.pct * 100).toFixed(1)}%`]);
   }
-  visitorRows.push([], ["Land", "Sidvisningar", "Andel"]);
-  for (const item of summarizePageViewField(rows, "country")) {
-    visitorRows.push([item.label, item.count, `${(item.pct * 100).toFixed(1)}%`]);
-  }
-  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(visitorRows), "Webbläsare och länder");
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(visitorRows), "Webbläsare");
 
   if (extra?.imageAnalytics) {
     const imageRows: (string | number)[][] = [[
