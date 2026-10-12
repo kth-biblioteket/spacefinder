@@ -21,7 +21,7 @@ import {
 import { toast } from "sonner";
 import { track } from "@/lib/analytics";
 import { useTranslation } from "react-i18next";
-import { TableChairIcon } from "./icons/TableChairIcon";
+import { DEFAULT_CAPACITY_ICON } from "@/lib/defaultCapacityIcon";
 
 import { type Space } from "@/lib/spaces";
 import { useFilterOptions } from "@/lib/useFilterOptions";
@@ -634,10 +634,11 @@ export function SpaceCard({
                           />
                         )}
                         {(!capacityIconUrl || loadedCapacityIconUrl !== capacityIconUrl) && (
-                          <TableChairIcon
+                          <img
                             data-capacity-icon
-                            className="h-3.5 w-3.5 text-foreground"
-                            aria-hidden="true"
+                            src={DEFAULT_CAPACITY_ICON}
+                            alt=""
+                            className="h-3.5 w-3.5 object-contain"
                           />
                         )}
                       </span>
