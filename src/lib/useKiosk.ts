@@ -6,15 +6,22 @@ import { UI_SETTINGS_QUERY_KEY, uiSettingsQueryOptions } from "@/lib/useUiText";
 export const KIOSK_INTRO_LINKS_SETTING_KEY = "kiosk_show_intro_links";
 const SESSION_KEY = "spacefinder_kiosk";
 
+/** Explicit URL settings override a remembered browser session. */
+export function kioskModeFromParam(param: string | null): boolean | undefined {
+  if (param === "1") return true;
+  if (param === "0") return false;
+  return undefined;
+}
+
 /** True when the page was opened with ?kiosk=1 (remembered for the browser session). */
 export function isKioskMode(): boolean {
   if (typeof window === "undefined") return false;
-  const param = new URL(window.location.href).searchParams.get("kiosk");
-  if (param === "1") {
+  const explicit = kioskModeFromParam(new URL(window.location.href).searchParams.get("kiosk"));
+  if (explicit === true) {
     try { sessionStorage.setItem(SESSION_KEY, "1"); } catch { /* ignore */ }
     return true;
   }
-  if (param === "0") {
+  if (explicit === false) {
     try { sessionStorage.removeItem(SESSION_KEY); } catch { /* ignore */ }
     return false;
   }
