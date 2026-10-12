@@ -98,6 +98,7 @@ export function SpaceCard({
   const [highlighted, setHighlighted] = useState(false);
   const [shareOpen, setShareOpen] = useState(false);
   const [shareUrl, setShareUrl] = useState("");
+  const [loadedCapacityIconUrl, setLoadedCapacityIconUrl] = useState<string | null>(null);
 
   const headerRoving = useRovingTabIndex();
   const actionRoving = useRovingTabIndex();
@@ -114,7 +115,7 @@ export function SpaceCard({
       "button_booking",
     ],
   } = useCardLayout();
-  const { data: capacityIconUrl, isPending: capacityIconPending } = useCapacityIcon();
+  const { data: capacityIconUrl } = useCapacityIcon();
   const { occupancy, groupRoom } = useLiveSpaceStatus(space, {
     occupancy: previewOccupancy,
     groupRoom: previewGroupRoom,
@@ -618,17 +619,21 @@ export function SpaceCard({
                 <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-foreground">
                   {showCapacity && (
                     <p className="inline-flex items-center gap-1.5">
-                      <span className="inline-flex h-4 w-4 shrink-0 items-center justify-center">
-                        {capacityIconUrl ? (
+                      <span className="relative inline-flex h-4 w-4 shrink-0 items-center justify-center">
+                        {capacityIconUrl && (
                           <img
                             data-capacity-icon
                             src={capacityIconUrl}
                             alt=""
-                            className="h-3.5 w-3.5 object-contain"
+                            onLoad={() => setLoadedCapacityIconUrl(capacityIconUrl)}
+                            onError={() => setLoadedCapacityIconUrl(null)}
+                            className={cn(
+                              "absolute h-3.5 w-3.5 object-contain",
+                              loadedCapacityIconUrl === capacityIconUrl ? "visible" : "invisible",
+                            )}
                           />
-                        ) : capacityIconPending ? (
-                          <span className="h-3.5 w-3.5" aria-hidden="true" />
-                        ) : (
+                        )}
+                        {(!capacityIconUrl || loadedCapacityIconUrl !== capacityIconUrl) && (
                           <TableChairIcon
                             data-capacity-icon
                             className="h-3.5 w-3.5 text-foreground"
