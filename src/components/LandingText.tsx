@@ -3,7 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import type { Lang } from "@/i18n";
 import { sanitizeHtml, DESCRIPTION_SANITIZE_OPTIONS } from "@/lib/sanitizeHtml";
-import { useKiosk, useKioskIntroLinks, stripLinks } from "@/lib/useKiosk";
+import { useKiosk, useKioskIntroLinks, removeLinks, stripLinks } from "@/lib/useKiosk";
 
 const LINK_OPTIONS = {
   ...DESCRIPTION_SANITIZE_OPTIONS,
@@ -30,10 +30,11 @@ export function LandingText({ compact = false }: LandingTextProps) {
   const { i18n } = useTranslation();
   const lang: Lang = i18n.resolvedLanguage === "en" ? "en" : "sv";
   const { data: link } = useLandingLink(lang, kiosk);
-  const { data: kioskLinks = false } = useKioskIntroLinks();
+  const { data: kioskLinksMode = "plaintext" } = useKioskIntroLinks();
   const render = (p: string) => {
     const html = sanitizeHtml(p, LINK_OPTIONS);
-    return kiosk && !kioskLinks ? stripLinks(html) : html;
+    if (!kiosk || kioskLinksMode === "show") return html;
+    return kioskLinksMode === "hidden" ? removeLinks(html) : stripLinks(html);
   };
 
 

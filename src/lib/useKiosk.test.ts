@@ -1,7 +1,28 @@
 import { afterEach, expect, test, vi } from "vitest";
-import { isKioskMode, kioskModeFromParam } from "./useKiosk";
+import {
+  introLinksModeFromValue,
+  isKioskMode,
+  kioskModeFromParam,
+  removeLinks,
+  stripLinks,
+} from "./useKiosk";
 
 afterEach(() => vi.unstubAllGlobals());
+
+test("the stored setting maps to show, plain text or hidden", () => {
+  expect(introLinksModeFromValue("true")).toBe("show");
+  expect(introLinksModeFromValue("false")).toBe("plaintext");
+  expect(introLinksModeFromValue("hidden")).toBe("hidden");
+  expect(introLinksModeFromValue(undefined)).toBe("plaintext");
+});
+
+test("removeLinks removes anchors entirely while stripLinks keeps the text", () => {
+  const html = "<p>Läs mer på <a href=\"https://kth.se\">KTH</a> eller <a href=\"/x\">här</a>.</p>";
+  expect(stripLinks(html)).toBe(
+    "<p>Läs mer på <span>KTH</span> eller <span>här</span>.</p>",
+  );
+  expect(removeLinks(html)).toBe("<p>Läs mer på  eller .</p>");
+});
 
 test("kiosk=1 enables kiosk mode before browser storage is available", () => {
   expect(kioskModeFromParam("1")).toBe(true);

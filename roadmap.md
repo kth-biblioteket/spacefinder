@@ -9,3 +9,4 @@
 - [x] Show browser and country breakdowns in admin statistics and Excel export.
 - [x] Verify browser and country analytics in desktop and mobile admin views.
 - [x] Remove country statistics (endpoint, admin section, Excel export) while keeping browser statistics.
+- [x] Add a kiosk option to hide intro links completely (show / plain text / hidden).
