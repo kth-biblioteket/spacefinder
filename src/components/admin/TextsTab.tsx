@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAnnouncementAdmin, useSaveAnnouncement } from "@/lib/useAnnouncement";
 import { useBetaBadgeEnabled, useSaveBetaBadge } from "@/lib/useBetaBadge";
 import { useKioskIntroLinks, useSaveKioskIntroLinks, type KioskIntroLinksMode } from "@/lib/useKiosk";
@@ -37,31 +38,40 @@ export function LandingMessageTab() {
 }
 
 export function KioskLinksSection() {
-  const { data: enabled = false, isLoading } = useKioskIntroLinks();
+  const { data: mode = "plaintext", isLoading } = useKioskIntroLinks();
   const save = useSaveKioskIntroLinks();
+  const disabled = isLoading || save.isPending;
   return (
     <div className="bg-card rounded-2xl border border-border p-6 space-y-4">
       <div className="flex items-start justify-between gap-4">
         <div>
-          <h2 className="text-lg font-bold">Visa länkar i ingressen i kioskläge</h2>
+          <h2 className="text-lg font-bold">Länkar i ingressen i kioskläge</h2>
           <p className="text-sm text-muted-foreground mt-1">
-            Gäller bara kioskdatorn (adress med <code>?kiosk=1</code>). När inställningen är av visas
-            länktexten som vanlig text så att man inte kan lämna tjänsten. Desktop och mobil påverkas inte.
+            Gäller bara kioskdatorn (adress med <code>?kiosk=1</code>). Välj om länkarna ska visas
+            som vanligt, visas som vanlig text utan klick eller döljas helt. Desktop och mobil
+            påverkas inte.
           </p>
         </div>
         <div className="flex items-center gap-2 shrink-0">
-          <span className="text-sm font-medium">{enabled ? "På" : "Av"}</span>
-          <Switch
-            checked={enabled}
-            disabled={isLoading || save.isPending}
-            onCheckedChange={(value) =>
-              save.mutate(value, {
-                onSuccess: () => toast.success(value ? "Länkar visas i kioskläge" : "Länkar dolda i kioskläge"),
+          <Select
+            value={mode}
+            disabled={disabled}
+            onValueChange={(value) =>
+              save.mutate(value as KioskIntroLinksMode, {
+                onSuccess: () => toast.success("Inställningen är sparad"),
                 onError: () => toast.error("Kunde inte spara inställningen."),
               })
             }
-            aria-label="Visa länkar i ingressen i kioskläge"
-          />
+          >
+            <SelectTrigger className="w-56" aria-label="Länkar i ingressen i kioskläge">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="show">Visas som vanliga länkar</SelectItem>
+              <SelectItem value="plaintext">Visas som vanlig text</SelectItem>
+              <SelectItem value="hidden">Döljs helt</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
       </div>
     </div>
