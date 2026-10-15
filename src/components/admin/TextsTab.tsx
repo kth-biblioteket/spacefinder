@@ -3,7 +3,7 @@ import { toast } from "sonner";
 import { Switch } from "@/components/ui/switch";
 import { useAnnouncementAdmin, useSaveAnnouncement } from "@/lib/useAnnouncement";
 import { useBetaBadgeEnabled, useSaveBetaBadge } from "@/lib/useBetaBadge";
-import { useKioskIntroLinks, useSaveKioskIntroLinks } from "@/lib/useKiosk";
+import { useKioskIntroLinks, useSaveKioskIntroLinks, type KioskIntroLinksMode } from "@/lib/useKiosk";
 import {
   UI_TEXT_DEFAULTS,
   UI_TEXT_DEFAULTS_EN,
