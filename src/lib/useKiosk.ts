@@ -4,6 +4,15 @@ import { supabase } from "@/integrations/supabase/client";
 import { UI_SETTINGS_QUERY_KEY, uiSettingsQueryOptions } from "@/lib/useUiText";
 
 export const KIOSK_INTRO_LINKS_SETTING_KEY = "kiosk_show_intro_links";
+/** How links in the intro/body text behave on kiosk computers. */
+export type KioskIntroLinksMode = "show" | "plaintext" | "hidden";
+
+/** Map a stored setting value to a mode; "false" and anything unknown mean plain text. */
+export function introLinksModeFromValue(value: string | undefined): KioskIntroLinksMode {
+  if (value === "true") return "show";
+  if (value === "hidden") return "hidden";
+  return "plaintext";
+}
 const SESSION_KEY = "spacefinder_kiosk";
 
 /** Explicit URL settings override a remembered browser session. */
@@ -38,17 +47,17 @@ export function useKiosk(): boolean {
 export function useKioskIntroLinks() {
   return useQuery({
     ...uiSettingsQueryOptions,
-    select: (s) => (s[KIOSK_INTRO_LINKS_SETTING_KEY] ?? "false") === "true",
+    select: (s) => introLinksModeFromValue(s[KIOSK_INTRO_LINKS_SETTING_KEY]),
   });
 }
 
 export function useSaveKioskIntroLinks() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (enabled: boolean) => {
+    mutationFn: async (mode: KioskIntroLinksMode) => {
       const { error } = await supabase
         .from("app_settings")
-        .upsert({ key: KIOSK_INTRO_LINKS_SETTING_KEY, value: enabled ? "true" : "false" });
+        .upsert({ key: KIOSK_INTRO_LINKS_SETTING_KEY, value: mode });
       if (error) throw error;
     },
     onSuccess: () => queryClient.invalidateQueries({ queryKey: UI_SETTINGS_QUERY_KEY }),
@@ -58,4 +67,12 @@ export function useSaveKioskIntroLinks() {
 /** Turn <a> tags into plain <span> so links can't be followed. */
 export function stripLinks(html: string): string {
   return html.replace(/<a\b[^>]*>/gi, "<span>").replace(/<\/a>/gi, "</span>");
+}
+
+/** Remove <a> elements entirely, including their text. */
+export function removeLinks(html: string): string {
+  return html
+    .replace(/<a\b[^>]*>[\s\S]*?<\/a>/gi, "")
+    .replace(/<a\b[^>]*\/>/gi, "")
+    .trim();
 }
