@@ -101,8 +101,40 @@ function applySecurityHeaders(response: Response): Response {
   });
 }
 
+// Non-production hostnames (e.g. the ref environment) must never appear in
+// search results: serve a fully blocking robots.txt and mark every response
+// with X-Robots-Tag: noindex so Google drops already-indexed pages.
+function isNonProductionHostname(hostname: string): boolean {
+  return hostname.includes("spacefinder-ref") || hostname.includes("-ref.");
+}
+
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown) {
+    const hostname = new URL(request.url).hostname;
+    if (isNonProductionHostname(hostname)) {
+      if (new URL(request.url).pathname === "/robots.txt") {
+        return applySecurityHeaders(
+          new Response("User-agent: *\nDisallow: /\n", {
+            headers: { "content-type": "text/plain; charset=utf-8" },
+          }),
+        );
+      }
+      try {
+        const handler = await getServerEntry();
+        const response = await handler.fetch(request, env, ctx);
+        const normalized = applySecurityHeaders(await normalizeCatastrophicSsrResponse(response));
+        const headers = new Headers(normalized.headers);
+        headers.set("X-Robots-Tag", "noindex, nofollow");
+        return new Response(normalized.body, {
+          status: normalized.status,
+          statusText: normalized.statusText,
+          headers,
+        });
+      } catch (error) {
+        console.error(error);
+        return applySecurityHeaders(brandedErrorResponse());
+      }
+    }
     try {
       const handler = await getServerEntry();
       const response = await handler.fetch(request, env, ctx);
