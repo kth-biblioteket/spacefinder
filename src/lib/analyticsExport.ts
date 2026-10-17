@@ -2,7 +2,7 @@ import * as XLSX from "xlsx";
 import { analyticsCategoryLabel, analyticsValueLabel } from "./analyticsLabels";
 import type { FilterCategoryRow, FilterOption } from "./spaces";
 import type { summarizeImageAnalytics } from "./imageAnalytics";
-import { summarizePageViewField } from "./visitorAnalytics";
+import { summarizePageViewField, summarizeLanguageAnalytics } from "./visitorAnalytics";
 
 type ImageAnalyticsSummary = ReturnType<typeof summarizeImageAnalytics>;
 
@@ -267,6 +267,15 @@ export function exportAnalyticsToExcel(
     visitorRows.push([item.label, item.count, `${(item.pct * 100).toFixed(1)}%`]);
   }
   XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(visitorRows), "Webbläsare");
+
+  const languages = summarizeLanguageAnalytics(rows);
+  const languageRows: (string | number)[][] = [["Språk", "Sidvisningar", "Andel sidvisningar", "Unika sessioner", "Andel sessioner"]];
+  languages.pageViews.forEach((item, index) => {
+    const session = languages.sessions[index];
+    languageRows.push([item.label, item.count, `${(item.pct * 100).toFixed(1)}%`, session?.count ?? 0, `${((session?.pct ?? 0) * 100).toFixed(1)}%`]);
+  });
+  languageRows.push([], ["Språkbyte räknas som en ny sidvisning av det valda språket."], ["En session kan räknas i båda språken; sessionsandelarna kan tillsammans överstiga 100 %."], ["Äldre visningar utan uppmätt språk ingår som Okänt / före mätning. Kioskbesök ingår."]);
+  XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(languageRows), "Språkval");
 
   if (extra?.imageAnalytics) {
     const imageRows: (string | number)[][] = [[
