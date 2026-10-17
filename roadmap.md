@@ -10,3 +10,5 @@
 - [x] Verify browser and country analytics in desktop and mobile admin views.
 - [x] Remove country statistics (endpoint, admin section, Excel export) while keeping browser statistics.
 - [x] Add a kiosk option to hide intro links completely (show / plain text / hidden).
+- [x] Track Swedish/English usage and show page views and unique sessions in admin and Excel without schema changes.
+- [x] Verify language switching, historical unknowns, and the signed-in statistics view.

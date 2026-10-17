@@ -2,6 +2,8 @@ import { isKioskMode } from "@/lib/useKiosk";
 import { useEffect, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { detectBrowser } from "@/lib/visitorAnalytics";
+import i18n from "@/i18n";
+import { useTranslation } from "react-i18next";
 
 const SESSION_KEY = "hsp_session_id";
 
@@ -50,6 +52,7 @@ function getContextPayload(event: AnalyticsEvent): Record<string, unknown> {
   const out: Record<string, unknown> = {
     device: detectDevice(),
     browser: detectBrowser(navigator.userAgent || ""),
+    lang: i18n.resolvedLanguage === "en" ? "en" : "sv",
   };
   try {
     const ref = document.referrer;
@@ -89,14 +92,17 @@ export function track(
   void send();
 }
 
-/** Track a page_view exactly once per mount + path change. */
+/** Track the displayed language on mount and after a language switch. */
 export function usePageView(name: string): void {
+  const { i18n: currentI18n } = useTranslation();
+  const lang = currentI18n.resolvedLanguage === "en" ? "en" : "sv";
   const lastRef = useRef<string | null>(null);
   useEffect(() => {
-    if (lastRef.current === name) return;
-    lastRef.current = name;
-    track("page_view", { name });
-  }, [name]);
+    const key = `${name}:${lang}`;
+    if (lastRef.current === key) return;
+    lastRef.current = key;
+    track("page_view", { name, lang });
+  }, [name, lang]);
 }
 
 /** Debounced tracker — useful for filter changes that fire on every keystroke. */

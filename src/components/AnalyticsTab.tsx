@@ -27,7 +27,7 @@ import { emptyFilters, type Filters } from "@/components/FilterPanel";
 import type { FilterCategoryRow, FilterOption, Space } from "@/lib/spaces";
 import { analyticsCategoryLabel, analyticsValueLabel } from "@/lib/analyticsLabels";
 import { summarizeImageAnalytics } from "@/lib/imageAnalytics";
-import { summarizePageViewField } from "@/lib/visitorAnalytics";
+import { summarizePageViewField, summarizeLanguageAnalytics } from "@/lib/visitorAnalytics";
 
 
 
@@ -461,6 +461,7 @@ export function AnalyticsTab({
   }, [rows]);
 
   const browserBreakdown = useMemo(() => summarizePageViewField(rows, "browser"), [rows]);
+  const languageAnalytics = useMemo(() => summarizeLanguageAnalytics(rows), [rows]);
 
   const sourceBreakdown = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -968,6 +969,19 @@ export function AnalyticsTab({
             help="Vilka webbläsare som användes vid sidvisningarna. Äldre besök från före denna mätning visas som Okänd."
             items={browserBreakdown}
           />
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+            <BreakdownSection
+              title="Språkval (sidvisningar)"
+              help="Svenska och engelska visningar under vald period, inklusive kiosker. Ett språkbyte räknas som en ny visning av det valda språket. Äldre visningar utan uppmätt språk visas som Okänt / före mätning. Andelarna beräknas av alla sidvisningar, även okända."
+              items={languageAnalytics.pageViews}
+            />
+            <BreakdownSection
+              title="Språkval (unika sessioner)"
+              help="Varje webbläsarflik räknas en gång per språk under perioden, inklusive kiosker. En session som visar både svenska och engelska räknas i båda grupperna. Andelarna beräknas av alla sessioner med sidvisningar och kan därför tillsammans överstiga 100 %. Äldre besök utan uppmätt språk visas som Okänt / före mätning."
+              items={languageAnalytics.sessions}
+            />
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             <Stat
