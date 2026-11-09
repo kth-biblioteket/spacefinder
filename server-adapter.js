@@ -99,7 +99,7 @@ createServer(async (req, res) => {
                 res.writeHead(403, { 'Content-Type': 'application/json' });
                 return res.end(JSON.stringify({
                   error: "access_denied",
-                  error_description: "Endast anställda på biblioteket har behörighet."
+                  error_description: "Du har inte behörighet att logga in som admin."
                 }));
               }
             } else if (!isListedUser(username)) {
