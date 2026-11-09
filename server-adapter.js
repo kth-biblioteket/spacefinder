@@ -22,11 +22,11 @@ const REST_INTERNAL_URL = process.env.REST_INTERNAL_URL || 'http://spacefinder-r
 // Vem som får logga in som admin. Sätts per server i .env (kommaseparerat, skiftlägesokänsligt):
 //   ADMIN_GROUPS  släpper in en användare vars KTH-gruppnamn innehåller något av värdena.
 //                 Ej satt = tidigare beteende (grupper som matchar pa.anstallda.T.TRA).
-//   ADMIN_USERS   KTH-användare, som användarnamn (abc) eller adress (abc@kth.se), som släpps in oavsett grupp.
-//                 Lösenordet kontrolleras ändå mot KTH. Andra domäner än @kth.se ändras inte.
+//   ADMIN_USERS   KTH-användare, som användarnamn (abc) eller inloggningsadress (abc@ug.kth.se / abc@kth.se),
+//                 som släpps in oavsett grupp. Lösenordet kontrolleras ändå mot KTH. Andra domäner ändras inte.
 const parseList = (value) => (value || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
 const ADMIN_GROUPS = parseList(process.env.ADMIN_GROUPS);
-const ADMIN_USERS = parseList(process.env.ADMIN_USERS).map((u) => u.replace(/@kth\.se$/, ''));
+const ADMIN_USERS = parseList(process.env.ADMIN_USERS).map((u) => u.replace(/@(ug\.)?kth\.se$/, ''));
 const DEFAULT_ADMIN_GROUP_RE = /pa\.anstallda\.T\.TRA./i;
 
 const isListedUser = (username) => ADMIN_USERS.includes(String(username).toLowerCase());
