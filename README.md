@@ -43,6 +43,15 @@ docker exec -i spacefinder-db psql -U postgres -d postgres < schema.sql
 
 Build args för Vite/Supabase-URL:er sätts i `.github/workflows/deploy_ref.yml`/`deploy_main.yml` (behövs eftersom Vite bakar in dem i bygget).
 
+### Vem som får logga in som admin
+
+Inloggning sker med KTH-konto, och den som släpps in får rollen `admin`. Vilka som släpps in styrs av två listor i serverns `.env` (kommaseparerade, skiftlägesokänsliga):
+
+- `ADMIN_GROUPS` — KTH-grupper. En användare släpps in om något av dess gruppnamn *innehåller* något av värdena, t.ex. `ADMIN_GROUPS=pa.anstallda.T.TRA,pa.anstallda.T.XYZ`. Ej satt = som tidigare (grupper som matchar `pa.anstallda.T.TRA`). När den sätts ersätter den standardvärdet, så ta med den gamla gruppen om den ska vara kvar.
+- `ADMIN_USERS` — KTH-användarnamn (delen före `@`) som släpps in oavsett grupp, t.ex. `ADMIN_USERS=abc,def`. Lösenordet kontrolleras fortfarande mot KTH.
+
+Ändringar läses in när `app`-containern skapas om: `sudo docker compose up -d app`. Vid nekad inloggning loggas användarens grupper (`sudo docker logs spacefinder`), vilket visar vilket gruppnamn som behöver läggas till. Den som tas bort ur listorna kan inte logga in igen, men en redan inloggad session gäller tills sessionstiden (`GOTRUE_SESSIONS_TIMEBOX`) gått ut, och rollen i `user_roles` tas inte bort automatiskt.
+
 ## För KTH
 ### Appen utvecklas på två parallella sätt mot samma repo:
 - **Lovable** — UI/funktionsutveckling i Lovable-editorn, synkas automatiskt till branchen `feature/lovable`.

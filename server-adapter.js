@@ -19,6 +19,24 @@ const STATIC_EXTENSIONS = ['.js', '.css', '.png', '.jpg', '.jpeg', '.svg', '.ico
 const AUTH_INTERNAL_URL = process.env.AUTH_INTERNAL_URL || 'http://spacefinder-auth:9999';
 const REST_INTERNAL_URL = process.env.REST_INTERNAL_URL || 'http://spacefinder-rest:3000';
 
+// Vem som får logga in som admin. Sätts per server i .env (kommaseparerat, skiftlägesokänsligt):
+//   ADMIN_GROUPS  släpper in en användare vars KTH-gruppnamn innehåller något av värdena.
+//                 Ej satt = tidigare beteende (grupper som matchar pa.anstallda.T.TRA).
+//   ADMIN_USERS   KTH-användarnamn (delen före @) som släpps in oavsett grupp. Lösenordet kontrolleras ändå mot KTH.
+const parseList = (value) => (value || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+const ADMIN_GROUPS = parseList(process.env.ADMIN_GROUPS);
+const ADMIN_USERS = parseList(process.env.ADMIN_USERS);
+const DEFAULT_ADMIN_GROUP_RE = /pa\.anstallda\.T\.TRA./i;
+
+const isListedUser = (username) => ADMIN_USERS.includes(String(username).toLowerCase());
+
+function isAllowedAdmin(username, userGroups) {
+  if (isListedUser(username)) return true;
+  const groups = (Array.isArray(userGroups) ? userGroups : [userGroups]).map((g) => String(g ?? ''));
+  if (ADMIN_GROUPS.length === 0) return groups.some((g) => DEFAULT_ADMIN_GROUP_RE.test(g));
+  return groups.some((g) => ADMIN_GROUPS.some((entry) => g.toLowerCase().includes(entry)));
+}
+
 createServer(async (req, res) => {
   const fullUrl = `http://${req.headers.host}${req.url}`;
   const url = new URL(fullUrl);
@@ -62,7 +80,7 @@ createServer(async (req, res) => {
             }));
           }
 
-          // 1.5. Använd KTH-token för att kontrollera att användaren tillhör biblioteket (pa.anstallda.T.TRA.)
+          // 1.5. Använd KTH-token för att kontrollera att användaren får vara admin (se ADMIN_GROUPS/ADMIN_USERS ovan)
           try {
             const username = email.split('@')[0];
             const accountRes = await fetch(`http://ldap-api/api/v1/account/${encodeURIComponent(username)}`, {
@@ -75,19 +93,16 @@ createServer(async (req, res) => {
               const accountData = await accountRes.json();
               const userObj = accountData.ugusers ? accountData.ugusers[0] : accountData;
               const userGroups = userObj?.kthPAGroupMembership || userObj?.memberOf || [];
-              const groupRegex = /pa\.anstallda\.T\.TRA./i;
-              const groupsArray = Array.isArray(userGroups) ? userGroups : [userGroups];
-              const isLibraryEmployee = groupsArray.some(group => groupRegex.test(group));
 
-              if (!isLibraryEmployee) {
-                console.log("Access denied for:", email, "- Not in library group.");
+              if (!isAllowedAdmin(username, userGroups)) {
+                console.log("Access denied for:", email, "- not in an allowed group or ADMIN_USERS. Groups:", userGroups);
                 res.writeHead(403, { 'Content-Type': 'application/json' });
                 return res.end(JSON.stringify({
                   error: "access_denied",
                   error_description: "Endast anställda på biblioteket har behörighet."
                 }));
               }
-            } else {
+            } else if (!isListedUser(username)) {
               console.log("Could not fetch account info for group check:", email, accountRes.status);
               res.writeHead(403, { 'Content-Type': 'application/json' });
               return res.end(JSON.stringify({
