@@ -48,7 +48,7 @@ Build args för Vite/Supabase-URL:er sätts i `.github/workflows/deploy_ref.yml`
 Inloggning sker med KTH-konto, och den som släpps in får rollen `admin`. Vilka som släpps in styrs av två listor i serverns `.env` (kommaseparerade, skiftlägesokänsliga):
 
 - `ADMIN_GROUPS` — KTH-grupper. En användare släpps in om något av dess gruppnamn *innehåller* något av värdena, t.ex. `ADMIN_GROUPS=pa.anstallda.T.TRA,pa.anstallda.T.XYZ`. Ej satt = som tidigare (grupper som matchar `pa.anstallda.T.TRA`). När den sätts ersätter den standardvärdet, så ta med den gamla gruppen om den ska vara kvar.
-- `ADMIN_USERS` — KTH-användarnamn (delen före `@`) som släpps in oavsett grupp, t.ex. `ADMIN_USERS=abc,def`. Lösenordet kontrolleras fortfarande mot KTH.
+- `ADMIN_USERS` — KTH-användare som släpps in oavsett grupp, antingen som användarnamn eller som adress, t.ex. `ADMIN_USERS=abc,def@kth.se`. Lösenordet kontrolleras fortfarande mot KTH. Jämförelsen görs mot delen före `@` i det som skrivs i inloggningsrutan.
 
 Ändringar läses in när `app`-containern skapas om: `sudo docker compose up -d app`. Vid nekad inloggning loggas användarens grupper (`sudo docker logs spacefinder`), vilket visar vilket gruppnamn som behöver läggas till. Den som tas bort ur listorna kan inte logga in igen, men en redan inloggad session gäller tills sessionstiden (`GOTRUE_SESSIONS_TIMEBOX`) gått ut, och rollen i `user_roles` tas inte bort automatiskt.
 
