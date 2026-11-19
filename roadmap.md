@@ -12,3 +12,6 @@
 - [x] Add a kiosk option to hide intro links completely (show / plain text / hidden).
 - [x] Track Swedish/English usage and show page views and unique sessions in admin and Excel without schema changes.
 - [x] Verify language switching, historical unknowns, and the signed-in statistics view.
+- [x] Add independent Stockholm-time schedules for yellow notices and neutral information without schema changes.
+- [x] Add camera capture to the existing image upload flow.
+- [x] Verify schedule rules, saving, public display, and camera uploads.

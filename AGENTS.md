@@ -5,3 +5,5 @@
 - Store coarse visitor context as analytics event payloads and never persist IP addresses or precise locations; this keeps traffic insights privacy-conscious without schema changes.
 - Embed the small default capacity icon as a data URL, retaining its asset pointer; this avoids a startup request and works on self-hosted deployments while admin overrides load separately.
 - Resolve header kiosk visibility from router URL state during SSR; when the flag is absent, wait for session resolution to avoid flashing navigation on remembered kiosk visits.
+- Store per-card notice/info schedules in the existing tags.schedule JSON object; interpret wall-clock dates with Europe/Stockholm and refresh visibility at boundaries to avoid schema changes and stale kiosk displays.
+- Route camera captures through the existing image processing/upload handler; use the native environment capture input to preserve upload limits and storage compatibility.

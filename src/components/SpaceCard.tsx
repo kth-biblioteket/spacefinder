@@ -22,6 +22,7 @@ import { toast } from "sonner";
 import { track } from "@/lib/analytics";
 import { useTranslation } from "react-i18next";
 import { DEFAULT_CAPACITY_ICON } from "@/lib/defaultCapacityIcon";
+import { useTextSchedule } from "@/lib/useTextSchedule";
 
 import { type Space } from "@/lib/spaces";
 import { useFilterOptions } from "@/lib/useFilterOptions";
@@ -215,8 +216,9 @@ export function SpaceCard({
 
 
   const localizedDescription = pickLocalized(space, "description", lang);
-  const localizedNotice = pickLocalized(space, "notice", lang);
-  const localizedInfo = pickLocalized(space, "info", lang);
+  const textVisibility = useTextSchedule(space.tags);
+  const localizedNotice = textVisibility.notice ? pickLocalized(space, "notice", lang) : "";
+  const localizedInfo = textVisibility.info ? pickLocalized(space, "info", lang) : "";
   const localizedFloor = pickLocalized(space, "floor", lang);
   const localizedLocatedIn = pickLocalized(space, "located_in", lang);
   const localizedGroupBookingUrl =

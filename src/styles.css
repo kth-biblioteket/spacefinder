@@ -56,6 +56,7 @@
   --color-kth-navy: var(--kth-navy);
   --color-kth-blue: var(--kth-blue);
   --color-kth-sand: var(--kth-sand);
+  --color-notice-editor: var(--notice-editor);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar-primary: var(--sidebar-primary);
@@ -73,6 +74,7 @@
   --kth-navy: oklch(0.22 0.16 269);   /* #000061 */
   --kth-blue: oklch(0.43 0.16 260);   /* #1954a6 */
   --kth-sand: oklch(0.965 0 0);       /* #F5F5F5 */
+  --notice-editor: oklch(0.98 0.045 95);
 
   --background: oklch(1 0 0);                    /* white page background */
   --foreground: oklch(0 0 0);                    /* black body text */

@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { readTextSchedule, validateTextSchedule, type SpaceTags } from "./textSchedule";
 
 /**
  * Validation for the admin space form. The form keeps everything as strings,
@@ -53,6 +54,6 @@ export type SpaceFormInput = z.input<typeof spaceFormSchema>;
 /** Returns a list of human-readable problems, empty when the form is valid. */
 export function validateSpaceForm(form: Record<string, unknown>): string[] {
   const result = spaceFormSchema.safeParse(form);
-  if (result.success) return [];
-  return [...new Set(result.error.issues.map((issue) => issue.message))];
+  const scheduleErrors = validateTextSchedule(readTextSchedule(form.tags as SpaceTags | undefined));
+  return [...new Set([...(result.success ? [] : result.error.issues.map((issue) => issue.message)), ...scheduleErrors])];
 }

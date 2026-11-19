@@ -1,5 +1,6 @@
-import { useState, useEffect, useId, isValidElement, cloneElement, Children, type ReactElement } from "react";
-import { AlertTriangle, Armchair, CalendarClock, GripVertical, ImageIcon, Info, MapPin, Monitor, Upload, Users, X, Zap } from "lucide-react";
+import { useState, useEffect, useId, useRef, isValidElement, cloneElement, Children, type ReactElement } from "react";
+import { AlertTriangle, Armchair, CalendarClock, Camera, GripVertical, ImageIcon, Info, MapPin, Monitor, Upload, Users, X, Zap } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { OptionIcon } from "@/components/OptionIcon";
 import { TableChairIcon } from "@/components/icons/TableChairIcon";
 import { ChairIcon } from "@/components/icons/ChairIcon";
@@ -478,6 +479,7 @@ export function ImageDropzone({
 }) {
   const [dragOver, setDragOver] = useState(false);
   const inputId = useId();
+  const cameraInput = useRef<HTMLInputElement>(null);
 
   const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -514,6 +516,15 @@ export function ImageDropzone({
             </label>
             .
           </div>
+          <Button type="button" disabled={disabled} onClick={() => cameraInput.current?.click()} className="rounded-full gap-2">
+            <Camera className="h-4 w-4" aria-hidden="true" />Ta foto med kameran
+          </Button>
+          <input ref={cameraInput} type="file" accept="image/*" capture="environment" aria-label="Ta foto med kameran" className="hidden" disabled={disabled}
+            onChange={(e) => {
+              const files = e.target.files;
+              if (files && files.length > 0) onFiles(files);
+              e.target.value = "";
+            }} />
           <p className="text-xs text-muted-foreground">
             {busy
               ? "Bearbetar och laddar upp..."

@@ -1,4 +1,5 @@
 import { type Space } from "@/lib/spaces";
+import type { SpaceTags } from "@/lib/textSchedule";
 
 export const MAX_IMAGES = 8;
 
@@ -83,7 +84,7 @@ export type FormState = {
   equipment: string[];
   facilities: string[];
   lokaltyp: string[];
-  tags: Record<string, string[]>;
+  tags: SpaceTags;
   images: string[];
   image_alts: string[];
   image_alts_en: string[];
@@ -180,7 +181,7 @@ export function spaceToForm(s: Space): FormState {
     equipment: s.equipment ?? [],
     facilities: s.facilities ?? [],
     lokaltyp: s.lokaltyp ?? [],
-    tags: (s.tags ?? {}) as Record<string, string[]>,
+    tags: s.tags ?? {},
     images,
     image_alts,
     image_alts_en,
@@ -215,7 +216,7 @@ export function getFormValues(form: FormState, key: string): string[] {
     case "lokaltyp":
       return form.lokaltyp;
     default:
-      return form.tags[key] ?? [];
+      return Array.isArray(form.tags[key]) ? form.tags[key] as string[] : [];
   }
 }
 

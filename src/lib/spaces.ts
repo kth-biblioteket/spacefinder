@@ -1,5 +1,6 @@
 import * as Icons from "lucide-react";
 import type { LucideIcon } from "lucide-react";
+import type { SpaceTags } from "./textSchedule";
 
 /**
  * A space's "kind" is the value_key of a filter_options row in the
@@ -48,7 +49,7 @@ export type Space = {
   capacity: number | null;
   computer_count: number | null;
   informal_seat_count: number | null;
-  tags: Record<string, string[]>;
+  tags: SpaceTags;
   notice: string | null;
   notice_en: string | null;
   info: string | null;

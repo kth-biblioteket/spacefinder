@@ -7,6 +7,9 @@ import { cn } from "@/lib/utils";
 import { DynamicCategoryField, Field, ImageDropzone, LinkSyntaxHelp, SortableImageRow } from "./shared";
 import { SpaceCardPreview } from "./SpaceCardPreview";
 import { MAX_IMAGES, type FormState, getFormValues, setFormValues } from "./adminForm";
+import { AlertTriangle, Info } from "lucide-react";
+import { TextScheduleFields } from "./TextScheduleFields";
+import { readTextSchedule, type TextSchedule } from "@/lib/textSchedule";
 
 export function SpaceEditorDialog({
   form,
@@ -59,6 +62,14 @@ export function SpaceEditorDialog({
   uploadBusy: boolean;
   handleUploadFiles: (files: FileList | File[]) => void | Promise<void>;
 }) {
+  const schedule = readTextSchedule(form.tags);
+  const setSchedule = (next: TextSchedule) => setForm((previous) => {
+    const tags = { ...previous.tags };
+    const populated = Object.fromEntries(Object.entries(next).filter(([, value]) => value));
+    if (Object.keys(populated).length) tags.schedule = populated;
+    else delete tags.schedule;
+    return { ...previous, tags };
+  });
   return (
     <DialogContent className="max-w-6xl w-[calc(100vw-2rem)] h-[90vh] p-0 gap-0 flex flex-col overflow-hidden">
       <DialogHeader className="px-6 pt-5 pb-3 border-b border-border shrink-0">
@@ -82,7 +93,7 @@ export function SpaceEditorDialog({
       <Tabs
         value={editTab}
         onValueChange={(v) => setEditTab(v as typeof editTab)}
-        className="flex-1 flex flex-col min-h-0"
+        className="flex-1 flex flex-col min-h-0 min-w-0"
       >
         <div className="px-6 pt-3 shrink-0 border-b border-border overflow-x-auto">
           <TabsList className="bg-transparent p-0 h-auto gap-1">
@@ -119,7 +130,7 @@ export function SpaceEditorDialog({
           </TabsList>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-5 min-h-0">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden px-6 py-5 min-h-0 min-w-0">
           <TabsContent value="basic" className="mt-0 space-y-5 focus-visible:outline-none">
             <Field
               label={
@@ -361,11 +372,13 @@ export function SpaceEditorDialog({
               </span>
             </label>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <section className="bg-notice-editor p-4 space-y-4">
+              <h3 className="text-sm font-semibold flex items-center gap-2"><AlertTriangle className="h-4 w-4" aria-hidden="true" />Gul notis</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field
                 label={
                   <span className="flex items-center gap-2">
-                    Tillfällig notis, gul ruta (SV) <LinkSyntaxHelp slug={form.slug} />
+                    Gul notis (SV) <LinkSyntaxHelp slug={form.slug} />
                   </span>
                 }
               >
@@ -377,7 +390,7 @@ export function SpaceEditorDialog({
                   className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm"
                 />
               </Field>
-              <Field label="Temporary notice, yellow (EN)">
+              <Field label="Gul notis (EN)">
                 <textarea
                   rows={2}
                   value={form.notice_en}
@@ -386,10 +399,16 @@ export function SpaceEditorDialog({
                   className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm"
                 />
               </Field>
+              <TextScheduleFields kind="notice" schedule={schedule} onChange={setSchedule} />
+              </div>
+            </section>
+            <section className="border-t border-border pt-5 space-y-4">
+              <h3 className="text-sm font-semibold flex items-center gap-2"><Info className="h-4 w-4" aria-hidden="true" />Information (ofärgad)</h3>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <Field
                 label={
                   <span className="flex items-center gap-2">
-                    Information på kortet (SV) <LinkSyntaxHelp slug={form.slug} />
+                    Information (ofärgad) (SV) <LinkSyntaxHelp slug={form.slug} />
                   </span>
                 }
               >
@@ -401,7 +420,7 @@ export function SpaceEditorDialog({
                   className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm"
                 />
               </Field>
-              <Field label="Info on the card (EN)">
+              <Field label="Information (ofärgad) (EN)">
                 <textarea
                   rows={2}
                   value={form.info_en}
@@ -410,7 +429,9 @@ export function SpaceEditorDialog({
                   className="w-full rounded-lg border border-border bg-card px-3 py-2 text-sm"
                 />
               </Field>
-            </div>
+              <TextScheduleFields kind="info" schedule={schedule} onChange={setSchedule} />
+              </div>
+            </section>
           </TabsContent>
 
           <TabsContent value="media" className="mt-0 space-y-6 focus-visible:outline-none">
